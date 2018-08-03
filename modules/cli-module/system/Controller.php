@@ -29,9 +29,12 @@ class Controller extends \Cli\Controller
         $files = Fs::scan($module_dir);
         if(!$files)
             return false;
+        if(in_array('.gitkeep', $files))
+            $files = array_values(array_diff($files, ['.gitkeep']));
+        
         if(count($files) !== 1)
             return false;
-        
+
         $module_name = $files[0];
         $module_dir.= '/' . $module_name;
         

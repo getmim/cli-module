@@ -40,7 +40,12 @@ class SyncerController extends \CliModule\Controller
     }
     
     private function callSync(array $config, string $here, string $target){
-        if(!Syncer::sync($here, $target, $config['__files'], 'update')){
+        $mode = 'update';
+        $target_mod_dir = $target . '/modules/' . $config['__name'];
+        if(!is_dir($target_mod_dir))
+            $mode = 'install';
+        
+        if(!Syncer::sync($here, $target, $config['__files'], $mode)){
             Bash::error('Unable to sync module sources');
             return;
         }
