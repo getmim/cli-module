@@ -42,8 +42,16 @@ class SyncerController extends \CliModule\Controller
     private function callSync(array $config, string $here, string $target){
         $mode = 'update';
         $target_mod_dir = $target . '/modules/' . $config['__name'];
-        if(!is_dir($target_mod_dir))
+        if(!is_dir($target_mod_dir)){
+            if(!Bash::ask([
+                'text' => 'Current module is not exists on `' . $target . '`, whould you like to install it instead?',
+                'type' => 'bool',
+                'default' => false
+            ])){
+                return;
+            }
             $mode = 'install';
+        }
         
         if(!Syncer::sync($here, $target, $config['__files'], $mode)){
             Bash::error('Unable to sync module sources');
@@ -143,6 +151,6 @@ class SyncerController extends \CliModule\Controller
         foreach($targets as $target)
             $this->callSync($mod_conf, $here, $target);
         
-        Bash::echo('Module synced');
+        Bash::echo('Accepted module synced');
     }
 }
