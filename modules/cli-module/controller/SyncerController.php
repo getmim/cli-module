@@ -51,6 +51,17 @@ class SyncerController extends \CliModule\Controller
                 return;
             }
             $mode = 'install';
+
+            // add current project to application modules
+            Module::addModuleDb($target, (object)[
+                'name' => $config['__name'],
+                'urls' => [
+                    'file' => (object)[
+                        'used' => true,
+                        'value' => $config['__git']
+                    ]
+                ]
+            ]);
         }
         
         if(!Syncer::sync($here, $target, $config['__files'], $mode)){
@@ -65,6 +76,10 @@ class SyncerController extends \CliModule\Controller
         
         // Add gitignore
         Module::addGitIgnoreDb($target, $config);
+
+        // install new dependencies
+        if(isset($config['__dependencies']))
+            Module::installDependencies($target, $config['__dependencies']);
         
         Config::init($target);
     }
