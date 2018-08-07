@@ -51,6 +51,7 @@ class BClass
             $result['implements'][] = $imp;
         }
         
+        $last_prefix = 'public';
         while(true){
             $space = $result['properties'] ? 3 : 2;
             $text  = $result['properties']
@@ -67,22 +68,26 @@ class BClass
             $prefix = Bash::ask([
                 'text' => 'Property prefix [public,static,protected,private]',
                 'space' => $space + 2,
-                'default' => 'public'
+                'default' => $last_prefix
             ]);
+
+            $last_prefix = $prefix;
             
             $res = [
                 'name' => $mth,
                 'prefix' => $prefix
             ];
-            
-            $res_val = Bash::ask([
-                'text' => 'Property default value',
-                'space' => $space + 2
-            ]);
-            if($res_val){
-                if(is_numeric($res_val))
-                    $res_val = (int)$res_val;
-                $res['value'] = $res_val;
+
+            if(false === strstr($mth, '=')){
+                $res_val = Bash::ask([
+                    'text' => 'Property default value',
+                    'space' => $space + 2
+                ]);
+                if($res_val){
+                    if(is_numeric($res_val))
+                        $res_val = (int)$res_val;
+                    $res['value'] = $res_val;
+                }
             }
             
             $result['properties'][] = $res;
@@ -104,8 +109,10 @@ class BClass
             $prefix = Bash::ask([
                 'text' => 'Method prefix [public,static,protected,private]',
                 'space' => $space + 2,
-                'default' => 'public'
+                'default' => $last_prefix
             ]);
+
+            $last_prefix = $prefix;
             
             $result['methods'][] = [
                 'name' => $mth,
@@ -148,11 +155,15 @@ class BClass
         $tx.= '{' . $nl;
         
         foreach($config['properties'] as $mth){
+            $mth_name = trim(chop($mth['name'], ';'));
+            if(false !== strstr($mth_name, '='))
+                $mth_name = preg_replace('! *= *!', ' = ', $mth_name);
+            
             $prefix = '';
             if($mth['prefix'])
                 $prefix = trim($mth['prefix']) . ' ';
             $tx.= $nl;
-            $tx.= '    ' . $prefix . '$' . $mth['name'];
+            $tx.= '    ' . $prefix . '$' . $mth_name;
             if(isset($mth['value']))
                 $tx.= ' = ' . to_source($mth['value']);
             $tx.= ';' . $nl;
@@ -162,8 +173,12 @@ class BClass
             $prefix = '';
             if($mth['prefix'])
                 $prefix = trim($mth['prefix']) . ' ';
+            $mth_name = trim($mth['name']);
+            if(false === strstr($mth_name, '('))
+                $mth_name.= '()';
+            
             $tx.= $nl;
-            $tx.= '    ' . $prefix . 'function ' . $mth['name'] . '() {' . $nl;
+            $tx.= '    ' . $prefix . 'function ' . $mth_name . ' {' . $nl;
             $tx.= '        ' . $nl;
             $tx.= '    }' . $nl;
         }
