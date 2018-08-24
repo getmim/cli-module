@@ -144,6 +144,7 @@ class SyncerController extends \CliModule\Controller
                 foreach($targets as $target){
                     Bash::echo('Sync to `' . $target . '`');
                     $this->callSync($mod_conf, $here, $target);
+                    Bash::echo('Continue watching');
                 }
             }
             
