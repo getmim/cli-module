@@ -39,12 +39,17 @@ class BModel
             'properties' => [
                 [
                     'name' => 'table',
-                    'prefix' => 'protected',
+                    'prefix' => 'protected static',
                     'value' => $table
                 ],
                 [
-                    'name' => 'fields',
-                    'prefix' => 'protected',
+                    'name' => 'chains',
+                    'prefix' => 'protected static',
+                    'value' => []
+                ],
+                [
+                    'name' => 'q',
+                    'prefix' => 'protected static',
                     'value' => []
                 ]
             ]
