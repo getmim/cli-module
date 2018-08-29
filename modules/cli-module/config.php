@@ -44,7 +44,7 @@ return [
     ],
     'gates' => [
         'tool-module' => [
-            'priority' => 1000,
+            'priority' => 3000,
             'host' => [
                 'value' => 'CLI'
             ],
