@@ -48,7 +48,7 @@ class SyncerController extends \CliModule\Controller
                 'type' => 'bool',
                 'default' => false
             ])){
-                return;
+                return false;
             }
             $mode = 'install';
 
@@ -66,7 +66,7 @@ class SyncerController extends \CliModule\Controller
         
         if(!Syncer::sync($here, $target, $config['__files'], $mode)){
             Bash::error('Unable to sync module sources');
-            return;
+            return false;
         }
         
         $module_conf_file = $target . '/etc/config/main.php';
@@ -82,6 +82,8 @@ class SyncerController extends \CliModule\Controller
             Module::installDependencies($target, $config['__dependencies']);
         
         Config::init($target);
+
+        return true;
     }
     
     public function watchAction(): void{
@@ -143,7 +145,8 @@ class SyncerController extends \CliModule\Controller
             if($change_found){
                 foreach($targets as $target){
                     Bash::echo('Sync to `' . $target . '`');
-                    $this->callSync($mod_conf, $here, $target);
+                    if(!$this->callSync($mod_conf, $here, $target))
+                        return;
                     Bash::echo('Continue watching');
                 }
             }

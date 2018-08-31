@@ -12,7 +12,7 @@ use Mim\Library\Fs;
 
 class BClass
 {
-    static function getConfig(string $ns, string $name, string $extends=null): array{
+    static function getConfig(string $ns, string $name, string $extends=null, string $type="class"): array{
         $result = [
             'name' => $name,
             'ns' => $ns,
@@ -22,10 +22,10 @@ class BClass
             'properties' => []
         ];
         
-        Bash::echo('We\'re going to create class `' . $ns . '\\' . $name . '`');
+        Bash::echo('We\'re going to create ' . $type . ' `' . $ns . '\\' . $name . '`');
         
         $extends_conf = [
-            'text'      => 'Class extends, incude ns',
+            'text'      => 'Extends, incude ns',
             'space'     => 2
         ];
         if($extends)
@@ -39,8 +39,8 @@ class BClass
         while(true){
             $space = $result['implements'] ? 3 : 2;
             $text  = $result['implements']
-                ? 'Add more class implements interface, include ns'
-                : 'Add class implements interface, include ns';
+                ? 'Add more interface to implements, include ns'
+                : 'Add interface to implements, include ns';
             
             $imp = Bash::ask([
                 'text'  => $text,
@@ -55,8 +55,8 @@ class BClass
         while(true){
             $space = $result['properties'] ? 3 : 2;
             $text  = $result['properties']
-                ? 'Add more class property'
-                : 'Add class property';
+                ? 'Add more property'
+                : 'Add property';
             
             $mth = Bash::ask([
                 'text'  => $text,
@@ -78,7 +78,7 @@ class BClass
                 'prefix' => $prefix
             ];
 
-            if(false === strstr($mth, '=')){
+            if($type != 'interface' && false === strstr($mth, '=')){
                 $res_val = Bash::ask([
                     'text' => 'Property default value',
                     'space' => $space + 2
@@ -96,8 +96,8 @@ class BClass
         while(true){
             $space = $result['methods'] ? 3 : 2;
             $text  = $result['methods']
-                ? 'Add more class method'
-                : 'Add class method';
+                ? 'Add more method'
+                : 'Add method';
             
             $mth = Bash::ask([
                 'text'  => $text,
@@ -123,7 +123,7 @@ class BClass
         return $result;
     }
     
-    static function write(string $here, array $module, array $config, string $path): void{
+    static function write(string $here, array $module, array $config, string $path, string $type='class'): void{
         $nl = PHP_EOL;
         
         $tx = '<?php' . $nl;
@@ -135,7 +135,8 @@ class BClass
         $tx.= $nl;
         $tx.= 'namespace ' . trim($config['ns'], '\\ ') . ';' . $nl;
         $tx.= $nl;
-        $tx.= 'class ' . $config['name'];
+        $tx.= $type . ' ';
+        $tx.= $config['name'];
         
         if(isset($config['extends']))
             $tx.= ' extends ' . $config['extends'];
@@ -178,9 +179,15 @@ class BClass
                 $mth_name.= '()';
             
             $tx.= $nl;
-            $tx.= '    ' . $prefix . 'function ' . $mth_name . ' {' . $nl;
-            $tx.= '        ' . $nl;
-            $tx.= '    }' . $nl;
+            $tx.= '    ' . $prefix . 'function ' . $mth_name;
+
+            if($type != 'interface'){
+                $tx.= ' {' . $nl;
+                $tx.= '        ' . $nl;
+                $tx.= '    }' . $nl;
+            }else{
+                $tx.= ';' . $nl;
+            }
         }
         
         $tx.= '}';

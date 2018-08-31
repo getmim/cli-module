@@ -12,6 +12,7 @@ use CliModule\Library\{
     Builder,
     BController,
     BHelper,
+    BIface,
     BLibrary,
     BModel,
     BService
@@ -29,6 +30,11 @@ class ModuleController extends \CliModule\Controller
         $here = $this->validateModuleHere();
         if(BHelper::build($here, $this->req->param->name))
             Bash::echo('Successfully create new blank helper file');
+    }
+
+    public function ifaceAction(): void{
+        if(BIface::build(getcwd(), $this->req->param->name))
+            Bash::echo('Successfully create new empty interface');
     }
     
     public function initAction(): void{

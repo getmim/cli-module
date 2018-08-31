@@ -1,9 +1,4 @@
 <?php
-/**
- * CLI Application
- * @package cli-module
- * @version 0.0.1
- */
 
 return [
     '__name' => 'cli-module',
@@ -16,15 +11,15 @@ return [
         'website' => 'https://iqbalfn.com/'
     ],
     '__files' => [
-        'modules/cli-module' => ['install', 'update', 'remove']
+        'modules/cli-module' => ['install','update','remove']
     ],
     '__dependencies' => [
         'required' => [
             [
-                'cli' => null
+                'cli' => NULL
             ],
             [
-                'cli-app' => null
+                'cli-app' => NULL
             ]
         ],
         'optional' => []
@@ -55,13 +50,12 @@ return [
     ],
     'routes' => [
         'tool-module' => [
-            '404' => [
+            404 => [
                 'handler' => 'Cli\\Controller::show404'
             ],
-            '500' => [
+            500 => [
                 'handler' => 'Cli\\Controller::show500'
             ],
-            
             'toolModuleInit' => [
                 'info' => 'Create new blank module on current directory',
                 'path' => [
@@ -69,7 +63,6 @@ return [
                 ],
                 'handler' => 'CliModule\\Controller\\Module::init'
             ],
-            
             'toolModuleController' => [
                 'info' => 'Create new controller for current module',
                 'path' => [
@@ -80,7 +73,6 @@ return [
                 ],
                 'handler' => 'CliModule\\Controller\\Module::controller'
             ],
-            
             'toolModuleHelper' => [
                 'info' => 'Create new helper for current module',
                 'path' => [
@@ -91,7 +83,16 @@ return [
                 ],
                 'handler' => 'CliModule\\Controller\\Module::helper'
             ],
-            
+            'toolModuleInterface' => [
+                'info' => 'Create new interface for current module',
+                'path' => [
+                    'value' => 'interface (:name)',
+                    'params' => [
+                        'name' => 'slug'
+                    ]
+                ],
+                'handler' => 'CliModule\\Controller\\Module::iface'
+            ],
             'toolModuleLibrary' => [
                 'info' => 'Create new library for current module',
                 'path' => [
@@ -102,7 +103,6 @@ return [
                 ],
                 'handler' => 'CliModule\\Controller\\Module::library'
             ],
-            
             'toolModuleModel' => [
                 'info' => 'Create new model for current module',
                 'path' => [
@@ -113,7 +113,6 @@ return [
                 ],
                 'handler' => 'CliModule\\Controller\\Module::model'
             ],
-            
             'toolModuleService' => [
                 'info' => 'Create new service for current module',
                 'path' => [
@@ -124,7 +123,6 @@ return [
                 ],
                 'handler' => 'CliModule\\Controller\\Module::service'
             ],
-            
             'toolModuleWatch' => [
                 'info' => 'Watch module changes and do sync',
                 'path' => [
@@ -135,7 +133,6 @@ return [
                 ],
                 'handler' => 'CliModule\\Controller\\Syncer::watch'
             ],
-            
             'toolModuleSync' => [
                 'info' => 'Sync module to any exists application',
                 'path' => [
@@ -148,7 +145,6 @@ return [
             ]
         ]
     ],
-
     'cli' => [
         'autocomplete' => [
             '!^module (watch|sync)( .*)?!' => [
