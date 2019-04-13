@@ -7,6 +7,7 @@
 
 namespace CliModule\Controller;
 
+use Mim\Library\Fs;
 use Cli\Library\Bash;
 use CliApp\Library\{
     Config,
@@ -85,6 +86,15 @@ class SyncerController extends \CliModule\Controller
 
         return true;
     }
+
+    private function removeNewFile(string $file, string $here, string $target): void{
+        $target_filename = $target . substr($file, strlen($here));
+        if(!is_file($target_filename))
+            return;
+        unlink($target_filename);
+        $target_filename = dirname($target_filename);
+        Fs::cleanUp($target_filename);
+    }
     
     public function watchAction(): void{
         $here = $this->validateModuleHere();
@@ -137,6 +147,7 @@ class SyncerController extends \CliModule\Controller
             foreach($last_files as $file => $time){
                 if(!isset($mod_files[$file])){
                     Bash::echo('File removed ( ' . $file . ' )');
+                    $this->removeNewFile($file, $here, $target);
                     unset($last_files[$file]);
                     $change_found = true;
                 }
