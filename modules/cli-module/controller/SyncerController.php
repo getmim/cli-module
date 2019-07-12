@@ -72,7 +72,7 @@ class SyncerController extends \CliModule\Controller
         $module_conf_file = $target . '/etc/config/main.php';
         
         // inject application config
-        ConfigInjector::inject($module_conf_file, $config);
+        ConfigInjector::inject($module_conf_file, $config, $target);
         
         // Add gitignore
         Module::addGitIgnoreDb($target, $config);
