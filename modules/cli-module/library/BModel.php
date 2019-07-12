@@ -67,7 +67,56 @@ class BModel
         $tx.= 'return ' . to_source($mod_conf) . ';';
         
         Fs::write($mod_conf_file, $tx);
+
+        $mig_file = 'modules/' . $mod_name . '/migrate.php';
+
+        self::_addMigrate($here, $lib_ns, $lib_name, $mig_file);
         
         return true;
+    }
+
+    private static function _addMigrate(string $here, string $ns, string $name, string $file): void{
+        $nl = PHP_EOL;
+
+        $migrates = [];
+        if(is_file($file))
+            $migrates = include $file;
+
+        $migrates[ $ns . '\\' . $name ] = [
+            'fields' => [
+                'id' => [
+                    'type' => 'INT',
+                    'attrs' => [
+                        'unsigned' => true,
+                        'primary_key' => true,
+                        'auto_increment' => true
+                    ],
+                    'index' => 1000
+                ],
+                'updated' => [
+                    'type' => 'TIMESTAMP',
+                    'attrs' => [
+                        'default' => 'CURRENT_TIMESTAMP',
+                        'update' => 'CURRENT_TIMESTAMP'
+                    ],
+                    'index' => 9000
+                ],
+                'created' => [
+                    'type' => 'TIMESTAMP',
+                    'attrs' => [
+                        'default' => 'CURRENT_TIMESTAMP'
+                    ],
+                    'index' => 10000
+                ]
+            ]
+        ];
+
+        ksort($migrates);
+        
+        $tx = '<?php' . $nl;
+        $tx.= $nl;
+        $tx.= 'return ' . to_source($migrates) . ';';
+        
+        Fs::write($file, $tx);
     }
 }
