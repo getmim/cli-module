@@ -14,16 +14,18 @@ class BClass
 {
     static function getConfig(string $ns, string $name, string $extends=null, string $type="class"): array{
         $result = [
-            'name' => $name,
-            'ns' => $ns,
-            'extends' => $extends,
-            'implements' => [],
-            'methods' => [],
-            'properties' => []
+            'name'      => $name,
+            'ns'        => $ns,
+            'extends'   => $extends,
+            'implements'=> [],
+            'methods'   => [],
+            'properties'=> [],
+            'uses'      => []
         ];
         
         Bash::echo('We\'re going to create ' . $type . ' `' . $ns . '\\' . $name . '`');
         
+        // .extends
         $extends_conf = [
             'text'      => 'Extends, incude ns',
             'space'     => 2
@@ -33,9 +35,13 @@ class BClass
         
         $extends = Bash::ask($extends_conf);
         
-        if($extends)
+        if($extends){
+            if(false === strstr($extends, '\\'))
+                $extends = '\\' . ucfirst($extends) . '\\Controller';
             $result['extends'] = $extends;
+        }
         
+        // .implements
         while(true){
             $space = $result['implements'] ? 3 : 2;
             $text  = $result['implements']
@@ -50,7 +56,8 @@ class BClass
                 break;
             $result['implements'][] = $imp;
         }
-        
+
+        // properties
         $last_prefix = 'public';
         while(true){
             $space = $result['properties'] ? 3 : 2;
@@ -93,16 +100,14 @@ class BClass
             $result['properties'][] = $res;
         }
         
+        // methods
         while(true){
             $space = $result['methods'] ? 3 : 2;
             $text  = $result['methods']
                 ? 'Add more method'
                 : 'Add method';
             
-            $mth = Bash::ask([
-                'text'  => $text,
-                'space' => $space
-            ]);
+            $mth = Bash::ask(['text'  => $text,'space' => $space]);
             if(!$mth)
                 break;
             
@@ -117,6 +122,51 @@ class BClass
             $result['methods'][] = [
                 'name' => $mth,
                 'prefix' => $prefix
+            ];
+        }
+
+        // uses
+        while(true){
+            $space = $result['uses'] ? 3 : 2;
+            $text  = $result['uses'] ? 'Add more uses class' : 'Add uses class';
+
+            $class = Bash::ask(['text'=>$text, 'space'=>$space]);
+            if(!$class)
+                break;
+
+            $alias = null;
+
+            $class = explode(' ', $class);
+            if(count($class) === 2)
+                $alias = $class[1];
+            elseif(count($class) === 3 && $class[1] === 'as')
+                $alias = $class[2];
+            $class = $class[0];
+
+            if($class === 'formatter')
+                $class = 'LibFormatter\Library\Formatter';
+
+            $className = explode('\\', $class);
+            $className = end($className);
+
+            if(!$alias){
+                $alias = $className;
+
+                if(false !== strstr($class, '\\Model\\')){
+                    $lastLower = preg_replace('!^.+[A-Z]([a-z]+)!', '$1', $className);
+                    $alias     = preg_replace('![a-z]!', '', $className) . $lastLower;
+                }
+
+                $useAs = Bash::ask([
+                    'text'    => 'Alias name',
+                    'space'   => $space + 2,
+                    'default' => $alias
+                ]);
+            }
+
+            $result['uses'][] = [
+                'class' => $class,
+                'alias' => $alias === $className ? NULL : $alias
             ];
         }
         
@@ -135,6 +185,17 @@ class BClass
         $tx.= $nl;
         $tx.= 'namespace ' . trim($config['ns'], '\\ ') . ';' . $nl;
         $tx.= $nl;
+
+        if(isset($config['uses'])){
+            foreach($config['uses'] as $uses){
+                $tx.= 'use ' . $uses['class'];
+                if($uses['alias'])
+                    $tx.= ' as ' . $uses['alias'];
+                $tx.= ';' . $nl;
+            }
+            $tx.= $nl;
+        }
+
         $tx.= $type . ' ';
         $tx.= $config['name'];
         
