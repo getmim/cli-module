@@ -10,6 +10,7 @@ namespace CliModule\Controller;
 use Cli\Library\Bash;
 use CliModule\Library\{
     Builder,
+    BAdmin,
     BController,
     BHelper,
     BIface,
@@ -20,10 +21,16 @@ use CliModule\Library\{
 
 class ModuleController extends \CliModule\Controller
 {
+    public function adminAction(): void{
+        $here = $this->validateModuleHere();
+        if(BAdmin::build($here, $this->req->param->name))
+            Bash::echo('Successfully create new control');
+    }
+
     public function controllerAction(): void{
         $here = $this->validateModuleHere();
         if(BController::build($here, $this->req->param->name))
-            Bash::echo('Successfully create new blank controller');
+            Bash::echo('Successfully create new controller');
     }
     
     public function helperAction(): void{

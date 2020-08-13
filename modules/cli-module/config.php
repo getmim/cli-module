@@ -63,6 +63,16 @@ return [
                 ],
                 'handler' => 'CliModule\\Controller\\Module::init'
             ],
+            'toolModuleAdmin' => [
+                'info' => 'Create new admin control for current module',
+                'path' => [
+                    'value' => 'admin (:name)',
+                    'params' => [
+                        'name' => 'slug'
+                    ]
+                ],
+                'handler' => 'CliModule\\Controller\\Module::admin'
+            ],
             'toolModuleController' => [
                 'info' => 'Create new controller for current module',
                 'path' => [

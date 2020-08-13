@@ -13,6 +13,7 @@ class Autocomplete extends \Cli\Autocomplete
         $farg = $args[1] ?? null;
         $result = [
             'init',
+            'admin',
             'controller',
             'helper',
             'library',

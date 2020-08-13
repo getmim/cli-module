@@ -145,6 +145,8 @@ class BClass
 
             if($class === 'formatter')
                 $class = 'LibFormatter\Library\Formatter';
+            elseif($class === 'form')
+                $class = 'LibForm\Library\Form';
 
             $className = explode('\\', $class);
             $className = end($className);
