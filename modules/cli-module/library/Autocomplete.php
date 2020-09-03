@@ -18,6 +18,7 @@ class Autocomplete extends \Cli\Autocomplete
             'helper',
             'library',
             'model',
+            'middleware',
             'service',
             'watch',
             'sync',

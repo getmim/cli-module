@@ -2,7 +2,7 @@
 
 return [
     '__name' => 'cli-module',
-    '__version' => '1.1.0',
+    '__version' => '1.2.0',
     '__git' => 'git@github.com:getphun/cli-module.git',
     '__license' => 'MIT',
     '__author' => [
@@ -122,6 +122,16 @@ return [
                     ]
                 ],
                 'handler' => 'CliModule\\Controller\\Module::model'
+            ],
+            'toolModuleMiddleware' => [
+                'info' => 'Create new middleware for current module',
+                'path' => [
+                    'value' => 'middleware (:name)',
+                    'params' => [
+                        'name' => 'slug'
+                    ]
+                ],
+                'handler' => 'CliModule\\Controller\\Module::middleware'
             ],
             'toolModuleService' => [
                 'info' => 'Create new service for current module',

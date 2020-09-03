@@ -15,6 +15,7 @@ use CliModule\Library\{
     BHelper,
     BIface,
     BLibrary,
+    BMiddleware,
     BModel,
     BService
 };
@@ -53,6 +54,12 @@ class ModuleController extends \CliModule\Controller
         $here = $this->validateModuleHere();
         if(BLibrary::build($here, $this->req->param->name))
             Bash::echo('Successfully create new blank library');
+    }
+
+    public function middlewareAction(): void{
+        $here = $this->validateModuleHere();
+        if(BMiddleware::build($here, $this->req->param->name))
+            Bash::echo('Successfully create new middleware');
     }
     
     public function modelAction(): void{
