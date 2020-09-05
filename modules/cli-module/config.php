@@ -2,7 +2,7 @@
 
 return [
     '__name' => 'cli-module',
-    '__version' => '1.2.0',
+    '__version' => '1.3.0',
     '__git' => 'git@github.com:getphun/cli-module.git',
     '__license' => 'MIT',
     '__author' => [
@@ -82,6 +82,13 @@ return [
                     ]
                 ],
                 'handler' => 'CliModule\\Controller\\Module::controller'
+            ],
+            'toolModuleGit' => [
+                'info' => 'Initialize current module folder as git repo',
+                'path' => [
+                    'value' => 'git'
+                ],
+                'handler' => 'CliModule\\Controller\\Module::git'
             ],
             'toolModuleHelper' => [
                 'info' => 'Create new helper for current module',

@@ -12,6 +12,7 @@ use CliModule\Library\{
     Builder,
     BAdmin,
     BController,
+    BGit,
     BHelper,
     BIface,
     BLibrary,
@@ -32,6 +33,12 @@ class ModuleController extends \CliModule\Controller
         $here = $this->validateModuleHere();
         if(BController::build($here, $this->req->param->name))
             Bash::echo('Successfully create new controller');
+    }
+
+    public function gitAction(): void{
+    	$here = $this->validateModuleHere();
+        if(BGit::init($here))
+            Bash::echo('Successfully initializing current module git remote origin repository');
     }
     
     public function helperAction(): void{

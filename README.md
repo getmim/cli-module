@@ -16,7 +16,9 @@ mim app install cli-module
 mim module init
 mim module controller (name)
 mim module helper (name)
+mim moduel git
 mim module library (name)
+mim module middleware (name)
 mim module model (name)
 mim module service (name)
 mim module watch (target[ ...])

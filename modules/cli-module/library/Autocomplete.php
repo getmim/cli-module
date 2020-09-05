@@ -15,6 +15,7 @@ class Autocomplete extends \Cli\Autocomplete
             'init',
             'admin',
             'controller',
+            'git',
             'helper',
             'library',
             'model',
