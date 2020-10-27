@@ -21,10 +21,10 @@ mim module library (name)
 mim module middleware (name)
 mim module model (name)
 mim module service (name)
-mim module watch (target[ ...])
-mim module sync (target[ ...])
+mim module watch (host|dir)
+mim module sync (host|dir)
 ```
 
-Perintah `mim module watch [dir]` dan `mim module sync [dir]` menggunakan method
-sync yang sama dengan perintah `mim app update [module]` dengan sumber data dari
-folder yang sedang aktif.
+Perintah `mim module watch [host|dir]` dan `mim module sync [host|dir]`
+menggunakan method sync yang sama dengan perintah `mim app update [module]`
+dengan sumber data dari folder yang sedang aktif.
