@@ -2,7 +2,7 @@
 
 return [
     '__name' => 'cli-module',
-    '__version' => '1.3.0',
+    '__version' => '2.0.0',
     '__git' => 'git@github.com:getphun/cli-module.git',
     '__license' => 'MIT',
     '__author' => [
@@ -153,9 +153,9 @@ return [
             'toolModuleWatch' => [
                 'info' => 'Watch module changes and do sync',
                 'path' => [
-                    'value' => 'watch (:target)',
+                    'value' => 'watch (:host)',
                     'params' => [
-                        'target' => 'rest'
+                        'host' => 'any'
                     ]
                 ],
                 'handler' => 'CliModule\\Controller\\Syncer::watch'
@@ -163,9 +163,9 @@ return [
             'toolModuleSync' => [
                 'info' => 'Sync module to any exists application',
                 'path' => [
-                    'value' => 'sync (:target)',
+                    'value' => 'sync (:host)',
                     'params' => [
-                        'target' => 'rest'
+                        'host' => 'any'
                     ]
                 ],
                 'handler' => 'CliModule\\Controller\\Syncer::sync'
@@ -177,8 +177,8 @@ return [
             '!^module (watch|sync)( .*)?!' => [
                 'priority' => 4,
                 'handler' => [
-                    'class' => 'Cli\\Library\\Autocomplete',
-                    'method' => 'files'
+                    'class' => 'CliApp\\Library\\Autocomplete',
+                    'method' => 'host'
                 ]
             ],
             '!^module( [a-z]*)?$!' => [

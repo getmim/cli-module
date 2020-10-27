@@ -10,6 +10,7 @@ namespace CliModule\Controller;
 use Mim\Library\Fs;
 use Cli\Library\Bash;
 use CliApp\Library\{
+    Apps,
     Config,
     ConfigInjector,
     Module,
@@ -18,26 +19,22 @@ use CliApp\Library\{
 
 class SyncerController extends \CliModule\Controller
 {
-    private function getTarget(): ?array{
-        $targets = $this->req->param->target;
-        $paths   = [];
-        $here    = getcwd();
-        
-        // get absolute path of each target
-        foreach($targets as $target){
-            if(substr($target, 0, 1) === '/')
-                $paths[] = $target;
-            else
-                $paths[] = realpath($here . '/' . $target);
+    private function getTarget(): ?string{
+        $host = $target = $this->req->param->host;
+        $apps = Apps::getAll();
+        $here = getcwd();
+        if($apps){
+            if(isset($apps[$host]))
+                $target = $apps[$host];
         }
-        
-        // make sure each target is valid app dir
-        foreach($paths as $path){
-            if(!Module::isAppBase($path))
-                Bash::error('Target `' . $path . '` is not valid app dir');
-        }
-        
-        return $paths;
+
+        if(substr($target, 0, 1) !== '/')
+            $target = realpath($here . '/' . $target);
+
+        if(!Module::isAppBase($target))
+            Bash::error('Target `' . $target . '` is not valid app dir');
+
+        return $target;
     }
     
     private function callSync(array $config, string $here, string $target){
@@ -98,7 +95,7 @@ class SyncerController extends \CliModule\Controller
     
     public function watchAction(): void{
         $here = $this->validateModuleHere();
-        if(!($targets = $this->getTarget()))
+        if(!($target = $this->getTarget()))
             return;
         
         $mod_conf_file = glob($here . '/modules/*/config.php');
@@ -154,12 +151,10 @@ class SyncerController extends \CliModule\Controller
             }
             
             if($change_found){
-                foreach($targets as $target){
-                    Bash::echo('Sync to `' . $target . '`');
-                    if(!$this->callSync($mod_conf, $here, $target))
-                        return;
-                    Bash::echo('Continue watching');
-                }
+                Bash::echo('Sync to `' . $target . '`');
+                if(!$this->callSync($mod_conf, $here, $target))
+                    return;
+                Bash::echo('Continue watching');
             }
             
             sleep(1);
@@ -168,7 +163,7 @@ class SyncerController extends \CliModule\Controller
     
     public function syncAction(): void{
         $here = $this->validateModuleHere();
-        if(!($targets = $this->getTarget()))
+        if(!($target = $this->getTarget()))
             return;
         
         $mod_conf_file = glob($here . '/modules/*/config.php');
@@ -178,8 +173,7 @@ class SyncerController extends \CliModule\Controller
         
         $mod_conf = include $mod_conf_file;
         
-        foreach($targets as $target)
-            $this->callSync($mod_conf, $here, $target);
+        $this->callSync($mod_conf, $here, $target);
         
         Bash::echo('Accepted module synced');
     }
