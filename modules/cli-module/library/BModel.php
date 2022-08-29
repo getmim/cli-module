@@ -54,70 +54,41 @@ class BModel
                 ]
             ]
         ];
-        
-        BClass::write($here, $mod_conf, $lib_config, $lib_file);
+
+        RequireAdder::module($mod_conf, 'lib-model', null);
+
+        // BClass::write($here, $mod_conf, $lib_config, $lib_file);
         
         // inject autoload
         ALAdder::classes($mod_conf, $lib_ns, $lib_name, $lib_file);
         
-        $nl = PHP_EOL;
-        
-        $tx = '<?php' . $nl;
-        $tx.= $nl;
-        $tx.= 'return ' . to_source($mod_conf) . ';';
-        
-        Fs::write($mod_conf_file, $tx);
+        self::_writeConfig($mod_conf_file, $mod_conf);
 
         $mig_file = 'modules/' . $mod_name . '/migrate.php';
 
-        self::_addMigrate($here, $lib_ns, $lib_name, $mig_file);
+        self::_addMigrate($here, $lib_ns, $lib_name, $mig_file, $table, $mod_conf_file, $mod_conf);
         
         return true;
     }
 
-    private static function _addMigrate(string $here, string $ns, string $name, string $file): void{
+    private static function _addMigrate(
+            string $here,
+            string $ns,
+            string $name,
+            string $file,
+            string $table,
+            string $cnf_file,
+            array &$config
+        ): void{
         $nl = PHP_EOL;
 
         $migrates = [];
         if(is_file($file))
             $migrates = include $file;
 
-        $migrates[ $ns . '\\' . $name ] = [
-            'fields' => [
-                'id' => [
-                    'type' => 'INT',
-                    'attrs' => [
-                        'unsigned' => true,
-                        'primary_key' => true,
-                        'auto_increment' => true
-                    ],
-                    'index' => 1000
-                ],
-                'user' => [
-                    'type' => 'INT',
-                    'attrs' => [
-                        'unsigned' => TRUE,
-                        'null' => FALSE
-                    ],
-                    'index' => 2000
-                ],
-                'updated' => [
-                    'type' => 'TIMESTAMP',
-                    'attrs' => [
-                        'default' => 'CURRENT_TIMESTAMP',
-                        'update' => 'CURRENT_TIMESTAMP'
-                    ],
-                    'index' => 10000
-                ],
-                'created' => [
-                    'type' => 'TIMESTAMP',
-                    'attrs' => [
-                        'default' => 'CURRENT_TIMESTAMP'
-                    ],
-                    'index' => 11000
-                ]
-            ]
-        ];
+        $fields = self::_collectFields($cnf_file, $config);
+        self::_writeFormatter($table, $fields, $cnf_file, $config);
+        $migrates[ $ns . '\\' . $name ] = [ 'fields' => $fields ];
 
         ksort($migrates);
         
@@ -126,5 +97,376 @@ class BModel
         $tx.= 'return ' . to_source($migrates) . ';';
         
         Fs::write($file, $tx);
+    }
+
+    private static function _fldNextId(int &$int): int
+    {
+        $int+= 1000;
+        return $int;
+    }
+
+    private static function _collectFields($cnf_file, &$config)
+    {
+        $fld_index = 0;
+
+        $fmt = Bash::ask([
+            'text' => 'Do you want to generate formatter?',
+            'type' => 'bool',
+            'default' => true
+        ]);
+
+        if ($fmt) {
+            RequireAdder::module($config, 'lib-formatter', null);
+            self::_writeConfig($cnf_file, $config);
+        }
+
+        $fields = [];
+
+        // the id field type
+        $id_types = [
+            1 => 'BIGINT',
+            2 => 'INTEGER',
+            3 => 'MEDIUMINT',
+            4 => 'SMALLINT',
+            5 => 'TINYINT'
+        ];
+        $id_type = Bash::ask([
+            'text' => 'The type of ID column (INTEGER)',
+            'options' => $id_types,
+            'default' => 2
+        ]);
+        $fields['id'] = [
+            'type' => $id_type,
+            'attrs' => [
+                'unsigned' => true,
+                'primary_key' => true,
+                'auto_increment' => true
+            ],
+            'index' => self::_fldNextId($fld_index)
+        ];
+        if ($fmt) {
+            $fields['id']['format'] = ['type' => 'number'];
+        }
+
+        // the user field
+        $inc_user = Bash::ask([
+            'text' => 'Do you want to include user field?',
+            'type' => 'bool',
+            'default' => true
+        ]);
+        if ($inc_user) {
+            $fields['user'] = [
+                'type' => 'INT',
+                'attrs' => [
+                    'unsigned' => TRUE,
+                    'null' => FALSE
+                ],
+                'index' => self::_fldNextId($fld_index)
+            ];
+
+            if ($fmt) {
+                $fields['user']['format'] = ['type' => 'user'];
+            }
+        }
+
+        // OTHER FIELDS
+        $def_type_opts = [
+            'TEXT',
+            'VARCHAR',
+            'BIGINT',
+            'DOUBLE',
+            'INTEGER',
+            'TINYINT',
+            'DATE',
+            'DATETIME',
+            '[MANUAL_INPUT]'
+        ];
+        $type_with_length = [
+            'VARCHAR',
+            'CHAR',
+            'DOUBLE'
+        ];
+        $type_with_unsigned = [
+            'BIGINT',
+            'DECIMAL',
+            'DOUBLE',
+            'FLOAT',
+            'INTEGER',
+            'MEDIUMINT',
+            'SMALLINT',
+            'TINYINT'
+        ];
+        $type_uniqable = [
+            'CHAR',
+            'VARCHAR'
+        ];
+
+        while(true) {
+            $col = [];
+
+            // .name
+            $col_name = Bash::ask([
+                'text' => 'Add more column',
+                'type' => 'text'
+            ]);
+
+            if (!$col_name) {
+                break;
+            }
+
+            // .type
+            $col['type'] = Bash::ask([
+                'text' => 'Column type (VARCHAR)',
+                'options' => $def_type_opts,
+                'default' => 1,
+                'space' => 1
+            ]);
+
+            $col['type'] = $def_type_opts[ $col['type'] ];
+            if ($col['type'] == '[MANUAL_INPUT]') {
+                $col['type'] = Bash::ask([
+                    'text' => 'Please input column type',
+                    'required' => true,
+                    'space' => 4
+                ]);
+            }
+
+            // .length
+            if (in_array($col['type'], $type_with_length)) {
+                $col['length'] = Bash::ask([
+                    'text' => 'LENGTH',
+                    'required' => true,
+                    'space' => 4,
+                    'default' => $col['type'] == 'DOUBLE' ? '12,3' : '100'
+                ]);
+            }
+
+            $col_attrs = [];
+
+            if ($col['type'] != 'TEXT') {
+                // .attrs.unsigned
+                if (in_array($col['type'], $type_with_unsigned)) {
+                    $uns_cnf = [
+                        'text' => 'UNSIGNED',
+                        'default' => true,
+                        'space' => 4,
+                        'type' => 'bool'
+                    ];
+                    if (Bash::ask($uns_cnf)) {
+                        $col_attrs['unsigned'] = true;
+                    }
+                }
+
+                // .attrs.null
+                $null_cnf = [
+                    'text' => 'NULLABLE',
+                    'default' => false,
+                    'space' => 4,
+                    'type' => 'bool'
+                ];
+                $col_attrs['null'] = Bash::ask($null_cnf);
+
+                // .attrs.unique
+                if (in_array($col['type'], $type_uniqable)) {
+                    $uni_cnf = [
+                        'text' => 'UNIQUE',
+                        'default' => false,
+                        'space' => 4,
+                        'type' => 'bool'
+                    ];
+                    if (Bash::ask($uni_cnf)) {
+                        $col_attrs['unique'] = true;
+                    }
+                }
+
+                // .attrs.default
+                if (!isset($col_attrs['unique']) || !$col_attrs['unique']) {
+                    $def_cnf = [
+                        'text' => 'DEFAULT',
+                        'space' => 4,
+                    ];
+                    $def_val = Bash::ask($def_cnf);
+                    if ($def_val) {
+                        $col_attrs['default'] = $def_val;
+                    }
+                }
+            }
+
+            $col['attrs'] = $col_attrs;
+
+            $col['index'] = self::_fldNextId($fld_index);
+
+            if ($fmt) {
+                $col['format'] = self::_fldFormat($cnf_file, $config);
+            }
+
+            $fields[$col_name] = $col;
+        }
+
+        // the updated/created field
+        $inc_timestamp = Bash::ask([
+            'text' => 'Do you want to include updated and created field?',
+            'type' => 'bool',
+            'default' => true
+        ]);
+        if ($inc_timestamp) {
+            $fields['updated'] = [
+                'type' => 'TIMESTAMP',
+                'attrs' => [
+                    'default' => 'CURRENT_TIMESTAMP',
+                    'update' => 'CURRENT_TIMESTAMP'
+                ],
+                'index' => self::_fldNextId($fld_index)
+            ];
+
+            $fields['created'] = [
+                'type' => 'TIMESTAMP',
+                'attrs' => [
+                    'default' => 'CURRENT_TIMESTAMP'
+                ],
+                'index' => self::_fldNextId($fld_index)
+            ];
+
+            if ($fmt) {
+                $fields['updated']['format'] = ['type' => 'date'];
+                $fields['created']['format'] = ['type' => 'date'];
+            }
+        }
+
+        return $fields;
+    }
+
+    private static function _fldFormat($cnf_file, &$config)
+    {
+        $result = [
+            'type' => null
+        ];
+
+        $types = [
+            'number',
+            'text',
+            'enum',
+            'date',
+            'media',
+            'object',
+            'json',
+            '[manual_input]'
+        ];
+        $type = Bash::ask([
+            'text' => 'Format type (text)',
+            'options' => $types,
+            'default' => 1,
+            'space' => 2
+        ]);
+        $type = $types[$type];
+        if($type == '[manual_input]') {
+            $type = Bash::ask([
+                'text' => 'Please input format type',
+                'space' => 4
+            ]);
+        }
+
+        $result['type'] = $type;
+
+        if ($type == 'enum') {
+            $enum_name = Bash::ask([
+                'text' => 'Enum name',
+                'space' => 6,
+                'required' => true
+            ]);
+
+            $enums = [];
+            while (true) {
+                $enum = Bash::ask([
+                    'text' => 'Add enum options (value?/label)',
+                    'space' => 6
+                ]);
+                if (!$enum) {
+                    break;
+                }
+                $eval = explode('/', $enum);
+                if (count($eval) == 1) {
+                    $enums[] = $eval[0];
+                } else {
+                    $enums[ $eval[0] ] = $eval[1];
+                }
+            }
+            $config = array_replace_recursive($config, [
+                'libEnum' => [
+                    'enums' => [
+                        $enum_name => $enums
+                    ]
+                ]
+            ]);
+
+            $result['enum'] = $enum_name;
+            if (is_indexed_array($enums)) {
+                $result['vtype'] = 'int';
+            }
+
+            RequireAdder::module($config, 'lib-enum', null);
+            self::_writeConfig($cnf_file, $config);
+        }
+
+        if ($type == 'object') {
+            $model_name = Bash::ask([
+                'text' => 'Model name',
+                'space' => 6,
+                'required' => true
+            ]);
+
+            $result['type'] = $type;
+            if ($model_name) {
+                $result['model'] = [
+                    'name' => $model_name,
+                    'field' => 'id',
+                    'type' => 'number'
+                ];
+            }
+
+            $format_name = Bash::ask([
+                'text' => 'Format name',
+                'space' => 6
+            ]);
+            $result['format'] = $format_name;
+        }
+
+        return $result;
+    }
+
+    private static function _writeConfig($file, $config)
+    {
+        $nl = PHP_EOL;
+
+        $tx = '<?php' . $nl;
+        $tx.= $nl;
+        $tx.= 'return ' . to_source($config) . ';';
+
+        Fs::write($file, $tx);
+    }
+
+    private static function _writeFormatter($name, $fields, $cnf_file, &$config)
+    {
+        $formats = [];
+        foreach ($fields as $field => $migs) {
+            if (!isset($migs['format'])) {
+                continue;
+            }
+            $formats[$field] = $migs['format'];
+        }
+
+        if (!$formats) {
+            return;
+        }
+
+        $config = array_replace_recursive($config, [
+            'libFormatter' => [
+                'formats' => [
+                    $name => $formats
+                ]
+            ]
+        ]);
+
+        self::_writeConfig($cnf_file, $config);
     }
 }
