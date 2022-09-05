@@ -136,7 +136,7 @@ class BModel
             'default' => 2
         ]);
         $fields['id'] = [
-            'type' => $id_type,
+            'type' => $id_types[$id_type],
             'attrs' => [
                 'unsigned' => true,
                 'primary_key' => true,
@@ -216,9 +216,9 @@ class BModel
 
             // .type
             $col['type'] = Bash::ask([
-                'text' => 'Column type (VARCHAR)',
+                'text' => 'Column type (INTEGER)',
                 'options' => $def_type_opts,
-                'default' => 1,
+                'default' => 4,
                 'space' => 1
             ]);
 
@@ -239,6 +239,9 @@ class BModel
                     'space' => 4,
                     'default' => $col['type'] == 'DOUBLE' ? '12,3' : '100'
                 ]);
+                if ($col['type'] === 'VARCHAR') {
+                    $col['length'] = (int)$col['length'];
+                }
             }
 
             $col_attrs = [];
@@ -297,7 +300,7 @@ class BModel
             $col['index'] = self::_fldNextId($fld_index);
 
             if ($fmt) {
-                $col['format'] = self::_fldFormat($cnf_file, $config);
+                $col['format'] = self::_fldFormat($col, $cnf_file, $config);
             }
 
             $fields[$col_name] = $col;
@@ -336,10 +339,20 @@ class BModel
         return $fields;
     }
 
-    private static function _fldFormat($cnf_file, &$config)
+    private static function _fldFormat($field, $cnf_file, &$config)
     {
         $result = [
             'type' => null
+        ];
+        $type_with_unsigned = [
+            'BIGINT',
+            'DECIMAL',
+            'DOUBLE',
+            'FLOAT',
+            'INTEGER',
+            'MEDIUMINT',
+            'SMALLINT',
+            'TINYINT'
         ];
 
         $types = [
@@ -352,10 +365,17 @@ class BModel
             'json',
             '[manual_input]'
         ];
+        $default = 1;
+        if (in_array($field['type'], $type_with_unsigned)) {
+            $default = 0;
+        }
+        if (in_array($field['type'], ['DATE', 'DATETIME'])) {
+            $default = 3;
+        }
         $type = Bash::ask([
-            'text' => 'Format type (text)',
+            'text' => 'Format type (' . $types[$default] . ')',
             'options' => $types,
-            'default' => 1,
+            'default' => $default,
             'space' => 2
         ]);
         $type = $types[$type];
@@ -445,20 +465,23 @@ class BModel
         Fs::write($file, $tx);
     }
 
-    private static function _writeFormatter($name, $fields, $cnf_file, &$config)
+    private static function _writeFormatter($name, &$fields, $cnf_file, &$config)
     {
         $formats = [];
-        foreach ($fields as $field => $migs) {
+        foreach ($fields as $field => &$migs) {
             if (!isset($migs['format'])) {
                 continue;
             }
             $formats[$field] = $migs['format'];
+            unset($migs['format']);
         }
+        unset($migs);
 
         if (!$formats) {
             return;
         }
 
+        $name = str_replace('_', '-', $name);
         $config = array_replace_recursive($config, [
             'libFormatter' => [
                 'formats' => [
