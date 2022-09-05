@@ -57,7 +57,7 @@ class BModel
 
         RequireAdder::module($mod_conf, 'lib-model', null);
 
-        // BClass::write($here, $mod_conf, $lib_config, $lib_file);
+        BClass::write($here, $mod_conf, $lib_config, $lib_file);
         
         // inject autoload
         ALAdder::classes($mod_conf, $lib_ns, $lib_name, $lib_file);
