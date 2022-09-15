@@ -20,7 +20,7 @@ class ControlWriter
         }
 
         if (!empty($auth['user'])) {
-            $result[] = 'if (!$this->use->isLogin()) {';
+            $result[] = 'if (!$this->user->isLogin()) {';
             $result[] = '    return $this->resp(401);';
             $result[] = '}';
         }

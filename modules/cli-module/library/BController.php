@@ -558,6 +558,10 @@ class BController
                 $route_path['params']['id'] = 'number';
             }
 
+            if (!$route_path['params']) {
+                unset($route_path['params']);
+            }
+
             $config['routes'][$gate][$route_name] = [
                 'path' => $route_path,
                 'handler' => $ctrl_name . '::' . $method,
