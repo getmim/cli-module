@@ -79,7 +79,7 @@ class ControlWriter
         self::getMethodParents($result, $config['parents']);
 
         $result[] = '$form = new Form(\'' . $form . '\');';
-        $result[] = 'if (!($valid = $form->validate($obj)) {';
+        $result[] = 'if (!($valid = $form->validate($obj))) {';
         $result[] = '    return $this->resp(422, $form->getErrors());';
         $result[] = '}';
 
@@ -219,7 +219,7 @@ class ControlWriter
         $result[] = '    \'page\' => $page,';
         $result[] = '    \'rpp\' => $rpp,';
         $result[] = '    \'total\' => ' . $model . '::count($cond)';
-        $result[] = '];';
+        $result[] = ']);';
 
 
         return $result;
@@ -287,7 +287,7 @@ class ControlWriter
         $result[] = '';
 
         $result[] = '$form = new Form(\'' . $form . '\');';
-        $result[] = 'if (!($valid = $form->validate($obj)) {';
+        $result[] = 'if (!($valid = $form->validate($obj))) {';
         $result[] = '    return $this->resp(422, $form->getErrors());';
         $result[] = '}';
 
