@@ -348,6 +348,8 @@ class BController
             'required' => true
         ]);
 
+        $prefix = chop($prefix, '/');
+
         $route = [
             'path' => [
                 'value' => $prefix,
@@ -539,7 +541,11 @@ class BController
             }
         }
 
-        $prefix.= ucfirst($format);
+        $format_cc = preg_replace('![^a-zA-Z0-9]!', ' ', $format);
+        $format_cc = ucwords($format_cc);
+        $format_cc = str_replace(' ', '', $format_cc);
+
+        $prefix.= $format_cc;
 
         $with_suffix_id = [
             'edit',
