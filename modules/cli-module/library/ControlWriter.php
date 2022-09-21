@@ -79,7 +79,7 @@ class ControlWriter
         self::getMethodParents($result, $config['parents']);
 
         $result[] = '$form = new Form(\'' . $form . '\');';
-        $result[] = 'if (!($valid = $form->validate($obj))) {';
+        $result[] = 'if (!($valid = $form->validate())) {';
         $result[] = '    return $this->resp(422, $form->getErrors());';
         $result[] = '}';
 
