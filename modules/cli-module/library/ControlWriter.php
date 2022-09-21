@@ -47,7 +47,11 @@ class ControlWriter
         $result = [];
 
         if (!empty($filters['status'])) {
-            $result['status'] = '\'' . $filters['status'] . '\'';
+            $sts = $filters['status'];
+            if (!is_numeric($sts)) {
+                $sts = '\'' . $sts . '\'';
+            }
+            $result['status'] = $sts;
         }
 
         if (!empty($filters['user'])) {
@@ -69,6 +73,8 @@ class ControlWriter
 
     protected static function getMethodApiCreate($method, $opts, $config, $uses)
     {
+        // deb($method, $opts, $config, $uses);
+
         $model = $config['model'];
         $model = $uses[$model];
         $format = $config['format'];
@@ -88,17 +94,30 @@ class ControlWriter
         if (!empty($columns['user'])) {
             $result[] = '$valid->user = $this->user->id;';
         }
-        if (isset($columns['status']) && !is_null($columns['status'])) {
-            $result[] = '$valid->status = \'' . $columns['status'] . '\';';
+        if (isset($columns['status']) && '' !== $columns['status']) {
+            if (!is_numeric($columns['status'])) {
+                $columns['status'] = '\'' . $columns['status'] . '\'';
+            }
+            $result[] = '$valid->status = ' . $columns['status'] . ';';
         }
+        if (!empty($columns['parents'])) {
+            foreach ($columns['parents'] as $parent => $opt) {
+                $par_prop = $opt['par_prop'];
+                $obj_prop = $opt['obj_prop'];
 
+                if ($par_prop === true) {
+                    $par_prop = $parent;
+                } else {
+                    $par_prop = '$' . $parent . '->' . $par_prop;
+                }
+                $result[] = '$valid->' . $obj_prop . ' = ' . $par_prop . ';';
+            }
+        }
 
         $result[] = '';
         $result[] = 'if(!($id = ' . $model . '::create((array)$valid))) {';
         $result[] = '    return $this->resp(500, null, ' . $model . '::lastError());';
         $result[] = '}';
-
-        // deb($columns);
 
         $result[] = '';
         $result[] = '$obj = ' . $model . '::getOne([\'id\' => $id]);';
@@ -137,7 +156,11 @@ class ControlWriter
 
         // soft delete
         if ($opts['status'] !== '') {
-            $result[] = '$set = [\'status\' => \'' . $opts['status'] . '\'];';
+            $sts = $opts['status'];
+            if (!is_numeric($sts)) {
+                $sts = '\'' . $sts . '\'';
+            }
+            $result[] = '$set = [\'status\' => ' . $sts . '];';
             $result[] = $model . '::set($set, [\'id\' => $obj->id]);';
         } else {
             $result[] = $model . '::remove([\'id\' => $obj->id]);';
@@ -401,7 +424,11 @@ class ControlWriter
             }
 
             if (!empty($filters['status'])) {
-                $ctn[] = '    \'status\' => \'' . $filters['status'] . '\'';
+                $sts = $filters['status'];
+                if (!is_numeric($sts)) {
+                    $sts = '\'' . $sts . '\'';
+                }
+                $ctn[] = '    \'status\' => ' . $sts;
             }
 
             $ctn[] = ']);';

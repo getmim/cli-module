@@ -348,7 +348,7 @@ class BController
             'required' => true
         ]);
 
-        $prefix = chop($prefix, '/');
+        $prefix = '/' . trim($prefix, '/');
 
         $route = [
             'path' => [
@@ -382,13 +382,7 @@ class BController
             ]);
             $route['path']['params'][$name] = $param_types[$type];
 
-            // include in property of created object
-            $parent = [
-                // 'increate' => Bash::ask([
-                //     'text' => 'Set on main object creation, column name',
-                //     'space' => 4
-                // ])
-            ];
+            $parent = [];
 
             $model = Bash::ask([
                 'text' => 'Model name',
@@ -557,7 +551,7 @@ class BController
         ];
         foreach ($class['methods'] as $method => $opts) {
             $route_name = $prefix . ucfirst($method);
-            $route_path = $class['route']['path'];
+            $route_path =  $class['route']['path'];
 
             if (in_array($method, $with_suffix_id)) {
                 $route_path['value'] .= '/(:id)';
