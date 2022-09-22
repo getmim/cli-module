@@ -71,10 +71,8 @@ class ControlWriter
         return $result;
     }
 
-    protected static function getMethodApiCreate($method, $opts, $config, $uses)
+    protected static function getMethodApiCreate($method, $opts, $config, $uses, &$comments)
     {
-        // deb($method, $opts, $config, $uses);
-
         $model = $config['model'];
         $model = $uses[$model];
         $format = $config['format'];
@@ -83,6 +81,8 @@ class ControlWriter
 
         self::getMethodAuth($result, $opts['auth'] ?? []);
         self::getMethodParents($result, $config['parents']);
+
+        $comments[] = '@Doc.Form ' . $form;
 
         $result[] = '$form = new Form(\'' . $form . '\');';
         $result[] = 'if (!($valid = $form->validate())) {';
@@ -171,7 +171,7 @@ class ControlWriter
         return $result;
     }
 
-    protected static function getMethodApiIndex($method, $opts, $config, $uses)
+    protected static function getMethodApiIndex($method, $opts, $config, $uses, &$comments)
     {
         $model = $config['model'];
         $model = $uses[$model];
@@ -196,6 +196,8 @@ class ControlWriter
             $result[] = 'if (!in_array($sort, $sort_by)) {';
             $result[] = '    $sort = \'created\';';
             $result[] = '}';
+
+            $comments[] = '@Doc.Sorts ' . implode(',', $opts['sorts']);
         }
 
         $result[] = '$by = $this->req->getQuery(\'by\', \'DESC\');';
@@ -218,6 +220,8 @@ class ControlWriter
             }
             $result[] = '];';
             $result[] = '$cond = $this->req->getCond($qry_filter);';
+
+            $comments[] = '@Doc.Filters ' . implode(',', $opts['filters']['query']);
         } else {
             $result[] = '$cond = [];';
         }
@@ -380,15 +384,17 @@ class ControlWriter
                 . ucfirst($method);
 
             $content = [];
+            $comments = [];
             if (method_exists(ControlWriter::class, $ctn)) {
-                $content = self::$ctn($method, $opts, $config, $uses);
+                $content = self::$ctn($method, $opts, $config, $uses, $comments);
             } else {
                 $content = ['// No content'];
             }
             $methods[$method . 'Action'] = [
                 'protected' => false,
                 'return' => null,
-                'content' => $content
+                'content' => $content,
+                'comments' => $comments
             ];
         }
     }
@@ -463,16 +469,17 @@ class ControlWriter
 
         if ($uses) {
             foreach ($uses as $class => $name) {
-                $tx.= implode(' ', [
-                    'use',
-                    ltrim($class, '\\'),
-                    'as',
-                    $name . ';' . $nl
-                ]);
+                $tx.= 'use ' . trim($class, '\\') . ';' . $nl;
             }
         }
 
         $tx.= $nl;
+
+        if (!empty($config['Postman.Path'])) {
+            $tx.= '/**' . $nl;
+            $tx.= ' * @Doc.Path ' . $config['Postman.Path'] . $nl;
+            $tx.= ' */' . $nl;
+        }
         $tx.= implode(' ', [
             'class',
             $config['name'],
@@ -485,6 +492,14 @@ class ControlWriter
         foreach ($methods as $method => $opts) {
             if (!$first) {
                 $tx.= $nl;
+            }
+
+            if ($opts['comments']) {
+                $tx.= '    /**' . $nl;
+                foreach ($opts['comments'] as $line) {
+                    $tx.= '     * ' . $line . $nl;
+                }
+                $tx.= '     */' . $nl;
             }
             $tx.= '    ';
             if ($opts['protected']) {

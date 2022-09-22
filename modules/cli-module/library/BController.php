@@ -348,6 +348,10 @@ class BController
             'required' => true
         ]);
 
+        $result['Postman.Path'] = Bash::ask([
+            'text' => 'Postman dir'
+        ]);
+
         $prefix = '/' . trim($prefix, '/');
 
         $route = [
