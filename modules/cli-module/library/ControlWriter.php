@@ -286,13 +286,15 @@ class ControlWriter
         return $result;
     }
 
-    protected static function getMethodApiUpdate($method, $opts, $config, $uses)
+    protected static function getMethodApiUpdate($method, $opts, $config, $uses, &$comments)
     {
         $model = $config['model'];
         $model = $uses[$model];
         $format = $config['format'];
         $form  = $opts['form'];
         $result = [];
+
+        $comments[] = '@Doc.Form ' . $form;
 
         $filters = self::getMethodStdFilter($opts['filters'] ?? [], $config['parents']);
 
