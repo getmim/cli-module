@@ -496,7 +496,7 @@ class ControlWriter
                 $tx.= $nl;
             }
 
-            if ($opts['comments']) {
+            if (isset($opts['comments'])) {
                 $tx.= '    /**' . $nl;
                 foreach ($opts['comments'] as $line) {
                     $tx.= '     * ' . $line . $nl;
