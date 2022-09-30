@@ -14,12 +14,12 @@ use CliModule\Library\BClass;
 
 class BModel
 {
-    static function build(string $here, string $table): bool{
+    static function build(string $here, string $table, array $config = []): bool{
         $mod_conf_file = glob($here . '/modules/*/config.php');
         if(!$mod_conf_file || !is_file($mod_conf_file[0]))
             Bash::error('Module config file not found');
         $mod_conf_file = $mod_conf_file[0];
-        
+
         $mod_conf = include $mod_conf_file;
         $mod_name = $mod_conf['__name'];
         
@@ -27,10 +27,18 @@ class BModel
         $lib_ns   = to_ns($mod_name . '\\Model');
         $lib_file = 'modules/' . $mod_name . '/model/' . $lib_name . '.php';
         
-        if(is_file($lib_file))
-            Bash::error('Model with the same file name already exists');
+        if(is_file($lib_file)){
+            $ow = Bash::ask([
+                'text' => 'Model with the same name already exists, Overide?',
+                'type' => 'bool',
+                'default' => false
+            ]);
+            if (!$ow) {
+                return false;
+            }
+        }
             
-        $lib_config = [
+        $lib_config = array_replace_recursive([
             'name' => $lib_name,
             'ns' => $lib_ns,
             'extends' => '\\Mim\\Model',
@@ -53,7 +61,10 @@ class BModel
                     'value' => []
                 ]
             ]
-        ];
+        ], $config);
+
+        $lib_name = $lib_config['name'];
+        $lib_ns = $lib_config['ns'];
 
         RequireAdder::module($mod_conf, 'lib-model', null);
 
@@ -66,7 +77,16 @@ class BModel
 
         $mig_file = 'modules/' . $mod_name . '/migrate.php';
 
-        self::_addMigrate($here, $lib_ns, $lib_name, $mig_file, $table, $mod_conf_file, $mod_conf);
+        self::_addMigrate(
+            $here,
+            $lib_ns,
+            $lib_name,
+            $mig_file,
+            $table,
+            $mod_conf_file,
+            $mod_conf,
+            $lib_config
+        );
         
         return true;
     }
@@ -78,7 +98,8 @@ class BModel
             string $file,
             string $table,
             string $cnf_file,
-            array &$config
+            array &$config,
+            array &$lib_config
         ): void{
         $nl = PHP_EOL;
 
@@ -86,7 +107,13 @@ class BModel
         if(is_file($file))
             $migrates = include $file;
 
-        $fields = self::_collectFields($cnf_file, $config);
+        if (isset($lib_config['fields'])) {
+            $fields = $lib_config['fields'];
+        } else {
+            $fields = self::_collectFields($cnf_file, $config);
+            $lib_config['fields'] = $fields;
+        }
+
         self::_writeFormatter($table, $fields, $cnf_file, $config);
         $migrates[ $ns . '\\' . $name ] = [ 'fields' => $fields ];
 
@@ -363,6 +390,7 @@ class BModel
             'media',
             'object',
             'json',
+            'user',
             '[manual_input]'
         ];
         $default = 1;
@@ -484,11 +512,10 @@ class BModel
         $name = str_replace('_', '-', $name);
         $config = array_replace_recursive($config, [
             'libFormatter' => [
-                'formats' => [
-                    $name => $formats
-                ]
+                'formats' => []
             ]
         ]);
+        $config['libFormatter']['formats'][$name] = $formats;
 
         self::_writeConfig($cnf_file, $config);
     }
