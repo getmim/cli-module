@@ -2,7 +2,7 @@
 
 return [
     '__name' => 'cli-module',
-    '__version' => '2.7.0',
+    '__version' => '2.8.0',
     '__git' => 'git@github.com:getphun/cli-module.git',
     '__license' => 'MIT',
     '__author' => [

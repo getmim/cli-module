@@ -416,6 +416,16 @@ class BModel
 
         $result['type'] = $type;
 
+        if ($type == 'number') {
+            if (in_array($field['type'], ['DOUBLE', 'FLOAT'])) {
+                $result['decimal'] = 2;
+            }
+        }
+
+        if ($type == 'media') {
+            RequireAdder::module($config, 'lib-media', null);
+        }
+
         if ($type == 'enum') {
             $enum_name = Bash::ask([
                 'text' => 'Enum name',
