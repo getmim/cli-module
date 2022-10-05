@@ -11,330 +11,6 @@ use Mim\Library\Fs;
 
 class ControlWriter
 {
-    protected static function getMethodAuth(&$result, $auth)
-    {
-        if (!empty($auth['app'])) {
-            $result[] = 'if (!$this->app->isAuthorized()) {';
-            $result[] = '    return $this->resp(401);';
-            $result[] = '}';
-        }
-
-        if (!empty($auth['user'])) {
-            $result[] = 'if (!$this->user->isLogin()) {';
-            $result[] = '    return $this->resp(401);';
-            $result[] = '}';
-        }
-
-        $result[] = '';
-    }
-
-    protected static function getMethodParents(&$result, $parents)
-    {
-        foreach ($parents as $par => $opts) {
-            if (!isset($opts['method'])) {
-                continue;
-            }
-            $result[] = '$' . $par . ' = $this->' . $opts['method'] . '();';
-            $result[] = 'if (!$' . $par . ') {';
-            $result[] = '    return $this->resp(404);';
-            $result[] = '}';
-            $result[] = '';
-        }
-    }
-
-    protected static function getMethodStdFilter($filters, $parents)
-    {
-        $result = [];
-
-        if (!empty($filters['status'])) {
-            $sts = $filters['status'];
-            if (!is_numeric($sts)) {
-                $sts = '\'' . $sts . '\'';
-            }
-            $result['status'] = $sts;
-        }
-
-        if (!empty($filters['user'])) {
-            $result['user'] = '$this->user->id';
-        }
-
-        if ($filters['parents']) {
-            foreach ($filters['parents'] as $name => $opts) {
-                if ($opts['par_prop'] === true) {
-                    $result[$opts['obj_prop']] = '$this->req->param->' . $name;
-                } else {
-                    $result[$opts['obj_prop']] = '$' . $name . '->' . $opts['par_prop'];
-                }
-            }
-        }
-
-        return $result;
-    }
-
-    protected static function getMethodApiCreate($method, $opts, $config, $uses, &$comments)
-    {
-        $model = $config['model'];
-        $model = $uses[$model];
-        $format = $config['format'];
-        $form  = $opts['form'];
-        $result = [];
-
-        self::getMethodAuth($result, $opts['auth'] ?? []);
-        self::getMethodParents($result, $config['parents']);
-
-        $comments[] = '@Doc.Form ' . $form;
-
-        $result[] = '$form = new Form(\'' . $form . '\');';
-        $result[] = 'if (!($valid = $form->validate())) {';
-        $result[] = '    return $this->resp(422, $form->getErrors());';
-        $result[] = '}';
-
-        // fill auto column
-        $columns = $opts['columns'];
-        if (!empty($columns['user'])) {
-            $result[] = '$valid->user = $this->user->id;';
-        }
-        if (isset($columns['status']) && '' !== $columns['status']) {
-            if (!is_numeric($columns['status'])) {
-                $columns['status'] = '\'' . $columns['status'] . '\'';
-            }
-            $result[] = '$valid->status = ' . $columns['status'] . ';';
-        }
-        if (!empty($columns['parents'])) {
-            foreach ($columns['parents'] as $parent => $opt) {
-                $par_prop = $opt['par_prop'];
-                $obj_prop = $opt['obj_prop'];
-
-                if ($par_prop === true) {
-                    $par_prop = $parent;
-                } else {
-                    $par_prop = '$' . $parent . '->' . $par_prop;
-                }
-                $result[] = '$valid->' . $obj_prop . ' = ' . $par_prop . ';';
-            }
-        }
-
-        $result[] = '';
-        $result[] = 'if(!($id = ' . $model . '::create((array)$valid))) {';
-        $result[] = '    return $this->resp(500, null, ' . $model . '::lastError());';
-        $result[] = '}';
-
-        $result[] = '';
-        $result[] = '$obj = ' . $model . '::getOne([\'id\' => $id]);';
-        $result[] = '$fmt = [];';
-        $result[] = '$obj = Formatter::format(\'' . $format . '\', $obj, $fmt);';
-        $result[] = '';
-        $result[] = '$this->resp(0, $obj);';
-
-        return $result;
-    }
-
-    protected static function getMethodApiDelete($method, $opts, $config, $uses)
-    {
-        $model = $config['model'];
-        $model = $uses[$model];
-        $result = [];
-
-        $filters = self::getMethodStdFilter($opts['filters'] ?? [], $config['parents']);
-
-        self::getMethodAuth($result, $opts['auth'] ?? []);
-        self::getMethodParents($result, $config['parents']);
-
-        $result[] = '$cond = [';
-        $result[] = '    \'id\' => $this->req->param->id,';
-        foreach ($filters as $key => $value) {
-            $result[] = '    \'' . $key . '\' => ' . $value . ',';
-        }
-        $result[] = '];';
-
-        $result[] = '$obj = ' . $model . '::getOne($cond);';
-        $result[] = 'if (!$obj) {';
-        $result[] = '    return $this->resp(404);';
-        $result[] = '}';
-
-        $result[] = '';
-
-        // soft delete
-        if ($opts['status'] !== '') {
-            $sts = $opts['status'];
-            if (!is_numeric($sts)) {
-                $sts = '\'' . $sts . '\'';
-            }
-            $result[] = '$set = [\'status\' => ' . $sts . '];';
-            $result[] = $model . '::set($set, [\'id\' => $obj->id]);';
-        } else {
-            $result[] = $model . '::remove([\'id\' => $obj->id]);';
-        }
-
-        $result[] = '';
-        $result[] = 'return $this->resp(0);';
-        return $result;
-    }
-
-    protected static function getMethodApiIndex($method, $opts, $config, $uses, &$comments)
-    {
-        $model = $config['model'];
-        $model = $uses[$model];
-        $format = $config['format'];
-        $result = [];
-
-        $filters = self::getMethodStdFilter($opts['filters'] ?? [], $config['parents']);
-
-        self::getMethodAuth($result, $opts['auth'] ?? []);
-        self::getMethodParents($result, $config['parents']);
-
-        // sort
-        $result[] = '// SORT BY';
-        $result[] = '$sort = \'created\';';
-        if ($opts['sorts']) {
-            $result[] = '$sort_by = [';
-            foreach ($opts['sorts'] as $sort) {
-                $result[] = '    \'' . $sort . '\',';
-            }
-            $result[] = '];';
-            $result[] = '$sort = $this->req->getQuery(\'sort\', \'created\');';
-            $result[] = 'if (!in_array($sort, $sort_by)) {';
-            $result[] = '    $sort = \'created\';';
-            $result[] = '}';
-
-            $comments[] = '@Doc.Sorts ' . implode(',', $opts['sorts']);
-        }
-
-        $result[] = '$by = $this->req->getQuery(\'by\', \'DESC\');';
-        $result[] = 'if (!in_array($by, [\'ASC\', \'DESC\'])) {';
-        $result[] = '    $by = \'DESC\';';
-        $result[] = '}';
-
-        // pagination
-        $result[] = '';
-        $result[] = '// PAGINATION';
-        $result[] = 'list($page, $rpp) = $this->req->getPager(12, 24);';
-        $result[] = '';
-
-        // cond from query string
-        if (!empty($opts['filters']['query'])) {
-            $result[] = '// QUERY FILTER';
-            $result[] = '$qry_filter = [';
-            foreach ($opts['filters']['query'] as $query) {
-                $result[] = '    \'' . $query . '\',';
-            }
-            $result[] = '];';
-            $result[] = '$cond = $this->req->getCond($qry_filter);';
-
-            $comments[] = '@Doc.Filters ' . implode(',', $opts['filters']['query']);
-        } else {
-            $result[] = '$cond = [];';
-        }
-
-        if ($filters) {
-            $result[] = '';
-            $result[] = '// AUTO FILTER';
-            foreach ($filters as $key => $value) {
-                $result[] = '$cond[\'' . $key . '\'] = ' . $value . ';';
-            }
-        }
-
-        $result[] = '';
-        $result[] = '$objs = ' . $model . '::get($cond, $rpp, $page, [$sort => $by]) ?? [];';
-        $result[] = 'if ($objs) {';
-        $result[] = '    $fmt = [];';
-        $result[] = '    $objs = Formatter::formatMany(\'' . $format . '\', $objs, $fmt);';
-        $result[] = '}';
-
-        $result[] = '';
-        $result[] = 'return $this->resp(0, $objs, null, [';
-        $result[] = '    \'page\' => $page,';
-        $result[] = '    \'rpp\' => $rpp,';
-        $result[] = '    \'total\' => ' . $model . '::count($cond)';
-        $result[] = ']);';
-
-
-        return $result;
-    }
-
-    protected static function getMethodApiSingle($method, $opts, $config, $uses)
-    {
-        $model = $config['model'];
-        $model = $uses[$model];
-        $format = $config['format'];
-        $result = [];
-
-        $filters = self::getMethodStdFilter($opts['filters'] ?? [], $config['parents']);
-
-        self::getMethodAuth($result, $opts['auth'] ?? []);
-        self::getMethodParents($result, $config['parents']);
-
-        $result[] = '$cond = [';
-        $result[] = '    \'id\' => $this->req->param->id,';
-        foreach ($filters as $key => $value) {
-            $result[] = '    \'' . $key . '\' => ' . $value . ',';
-        }
-        $result[] = '];';
-
-        $result[] = '$obj = ' . $model . '::getOne($cond);';
-        $result[] = 'if (!$obj) {';
-        $result[] = '    return $this->resp(404);';
-        $result[] = '}';
-
-        $result[] = '';
-
-        $result[] = '$fmt = [];';
-        $result[] = '$obj = Formatter::format(\'' . $format . '\', $obj, $fmt);';
-        $result[] = '';
-        $result[] = '$this->resp(0, $obj);';
-
-        return $result;
-    }
-
-    protected static function getMethodApiUpdate($method, $opts, $config, $uses, &$comments)
-    {
-        $model = $config['model'];
-        $model = $uses[$model];
-        $format = $config['format'];
-        $form  = $opts['form'];
-        $result = [];
-
-        $comments[] = '@Doc.Form ' . $form;
-
-        $filters = self::getMethodStdFilter($opts['filters'] ?? [], $config['parents']);
-
-        self::getMethodAuth($result, $opts['auth'] ?? []);
-        self::getMethodParents($result, $config['parents']);
-
-        $result[] = '$cond = [';
-        $result[] = '    \'id\' => $this->req->param->id,';
-        foreach ($filters as $key => $value) {
-            $result[] = '    \'' . $key . '\' => ' . $value . ',';
-        }
-        $result[] = '];';
-
-        $result[] = '$obj = ' . $model . '::getOne($cond);';
-        $result[] = 'if (!$obj) {';
-        $result[] = '    return $this->resp(404);';
-        $result[] = '}';
-
-        $result[] = '';
-
-        $result[] = '$form = new Form(\'' . $form . '\');';
-        $result[] = 'if (!($valid = $form->validate($obj))) {';
-        $result[] = '    return $this->resp(422, $form->getErrors());';
-        $result[] = '}';
-
-        $result[] = '';
-        $result[] = 'if(!' . $model . '::set((array)$valid, [\'id\' => $obj->id])) {';
-        $result[] = '    return $this->resp(500, null, ' . $model . '::lastError());';
-        $result[] = '}';
-
-        $result[] = '';
-        $result[] = '$obj = ' . $model . '::getOne([\'id\' => $obj->id]);';
-        $result[] = '$fmt = [];';
-        $result[] = '$obj = Formatter::format(\'' . $format . '\', $obj, $fmt);';
-        $result[] = '';
-        $result[] = '$this->resp(0, $obj);';
-
-        return $result;
-    }
-
     protected static function getUsesClasses(array $config)
     {
         $classes = [];
@@ -380,74 +56,134 @@ class ControlWriter
 
     protected static function genActionMethods(array &$config, array &$methods, $uses)
     {
-        foreach ($config['methods'] as $method => $opts) {
-            $ctn = 'getMethod'
-                . ucfirst($config['gate'])
-                . ucfirst($method);
+        $class = 'CliModule\\Library\\ControlMethodWriter' . ucfirst($config['gate']);
+        $class_exists = class_exists($class);
 
-            $content = [];
-            $comments = [];
-            if (method_exists(ControlWriter::class, $ctn)) {
-                $content = self::$ctn($method, $opts, $config, $uses, $comments);
-            } else {
-                $content = ['// No content'];
+        $auths = $config['auths'];
+        $gate = $config['gate'];
+        $parents = $config['parents'] ?? [];
+
+        $skip_methods = [];
+        foreach ($config['methods'] as $method => $opts) {
+            if (in_array($method, $skip_methods)) {
+                continue;
             }
+            $content = [];
+            self::setMethodAuth($content, $auths, $gate);
+            self::setRouteParentGetter($content, $parents, $gate);
+
+            if ($class_exists) {
+                $class::method($content, $config, $method, $opts, $uses);
+            } else {
+                $content[] = '// START EDIT HERE';
+            }
+
+            $comments = self::getMethodComment($config, $method, $opts);
             $methods[$method . 'Action'] = [
                 'protected' => false,
-                'return' => null,
-                'content' => $content,
-                'comments' => $comments
+                'return'    => null,
+                'content'   => $content,
+                'comments'  => $comments,
+                'arguments' => []
             ];
         }
     }
 
-    protected static function genParentGetterMethods(array &$config, array &$methods, $uses)
-    {
-        if (!$config['parents']) {
-            return;
+    protected static function getMethodComment($config, $method, $options) {
+        $result = [];
+
+        // with form
+        if (isset($options['form'])) {
+            $result[] = '@form ' . $options['form'];
         }
 
-        $tx = '';
-        foreach ($config['parents'] as $name => &$opts) {
-            if (!isset($opts['model'])) {
+        // with formatter
+        $with_format = ['index', 'single', 'details', 'update'];
+        if ($config['gate'] == 'api') {
+            $with_format[] = 'create';
+        }
+
+        if (in_array($method, $with_format)) {
+            if (isset($config['format'])) {
+                $format = $config['format'];
+                $result[] = '@format.name ' . $format['name'];
+                $result[] = '@format.fields ' . implode(', ', $format['fields']);
+            }
+        }
+
+        // soft delete
+        if (in_array($method, ['delete', 'remove'])) {
+            if (isset($options['status'])) {
+                $result[] = '@soft ' . $options['status'];
+            }
+        }
+
+        if ($method == 'index') {
+            // with sort
+            if ($options['sorts']) {
+                $result[] = '@sort ' . implode(', ', $options['sorts']);
+            }
+
+            // with query sting
+            if ($options['filters']) {
+                $result[] = '@filter.query ' . implode(', ', $options['filters']);
+            }
+        }
+
+        return $result;
+    }
+
+    protected static function setMethodAuth(&$content, $auth, $gate)
+    {
+        $au_line = [];
+
+        if (!empty($auth['app'])) {
+            $au_line[] = '!$this->app->isAuthorized()';
+        }
+
+        if (!empty($auth['user'])) {
+            $au_line[] = '!$this->user->isLogin()';
+        }
+
+        if ($au_line) {
+            $content[] = 'if (' . implode(' || ', $au_line) . ') {';
+            if ($gate === 'api') {
+                $content[] = '    return $this->resp(401);';
+            } else {
+                $content[] = '    deb(\'Unauthorized\');';
+            }
+            $content[] = '}';
+            $content[] = '';
+        }
+    }
+
+    protected static function setRouteParentGetter(&$content, $parents, $gate)
+    {
+        foreach ($parents as $name => $opts) {
+            if (!isset($opts['method'])) {
                 continue;
             }
 
-            $model = $opts['model'];
-            $mod_use = $uses[$model];
-            $method = 'getRouter' . ucfirst($name);
-            $opts['method'] = $method;
-
-            $ctn = [
-                '$value = $this->req->param->' . $name . ';',
-                'return ' . $mod_use . '::getOne([',
-                '    \'' . $opts['field'] . '\' => $value,'
-            ];
-
-            // filters
-            $filters = $opts['filters'] ?? [];
-
-            if (!empty($filters['user'])) {
-                $ctn[] = '    \'user\' => $this->user->id,';
+            $caller = '$'
+                . $name
+                . ' = $this->'
+                . $opts['method']
+                . '(';
+            if ($opts['arguments']) {
+                $caller.= '$' . implode(', $', array_keys($opts['arguments']));
             }
+            $caller.= ');';
 
-            if (!empty($filters['status'])) {
-                $sts = $filters['status'];
-                if (!is_numeric($sts)) {
-                    $sts = '\'' . $sts . '\'';
-                }
-                $ctn[] = '    \'status\' => ' . $sts;
+            $content[] = $caller;
+            $content[] = 'if (!$' . $name . ') {';
+            if ($gate === 'api') {
+                $content[] = '    return $this->resp(404);';
+            } else {
+                $content[] = '    deb(\'Not found\');';
             }
-
-            $ctn[] = ']);';
-
-            $methods[$method] = [
-                'protected' => true,
-                'return' => '?object',
-                'content' => $ctn
-            ];
+            $content[] = '}';
+            $content[] = '';
         }
-        unset($opts);
     }
 
     static function write(string $here, array $module, array $config, string $file)
@@ -466,7 +202,7 @@ class ControlWriter
         $tx.= $nl;
 
         $uses = self::getUsesClasses($config);
-        self::genParentGetterMethods($config, $methods, $uses);
+        ControlWriterParentMethod::setParentGetters($config, $methods, $uses);
         self::genActionMethods($config, $methods, $uses);
 
         if ($uses) {
@@ -477,9 +213,9 @@ class ControlWriter
 
         $tx.= $nl;
 
-        if (!empty($config['Postman.Path'])) {
+        if (!empty($config['Doc.Path'])) {
             $tx.= '/**' . $nl;
-            $tx.= ' * @Doc.Path ' . $config['Postman.Path'] . $nl;
+            $tx.= ' * @Doc.Path ' . $config['Doc.Path'] . $nl;
             $tx.= ' */' . $nl;
         }
         $tx.= implode(' ', [
@@ -509,7 +245,21 @@ class ControlWriter
             }
             $tx.= 'function ';
             $tx.= $method;
-            $tx.= '()';
+            $tx.= '(';
+            if ($opts['arguments']) {
+                $args = [];
+                foreach ($opts['arguments'] as $name => $opt) {
+                    $arg_line = '';
+                    if (isset($opt['type'])) {
+                        $arg_line.= $opt['type'] . ' ';
+                    }
+                    $arg_line.= '$' . $name;
+                    $args[] = $arg_line;
+                }
+
+                $tx.= implode(', ', $args);
+            }
+            $tx.= ')';
             if ($opts['return']) {
                 $tx.= ': ' . $opts['return'];
             }
