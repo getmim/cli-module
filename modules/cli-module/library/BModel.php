@@ -75,7 +75,7 @@ class BModel
         
         self::_writeConfig($mod_conf_file, $mod_conf);
 
-        $mig_file = 'modules/' . $mod_name . '/migrate.php';
+        $mig_file = $here . '/modules/' . $mod_name . '/migrate.php';
 
         self::_addMigrate(
             $here,
