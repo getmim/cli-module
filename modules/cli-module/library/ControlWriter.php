@@ -15,8 +15,15 @@ class ControlWriter
     {
         $classes = [];
 
+        // gate admin->index exists
+        if ($config['gate'] == 'admin') {
+            if (isset($config['methods']['index'])) {
+                $classes[] = 'LibPagination\\Library\\Paginator';
+            }
+        }
+
         // formatter
-        if ($config['format']) {
+        if (isset($config['format'])) {
             $classes[] = 'LibFormatter\\Library\\Formatter';
         }
 
@@ -64,12 +71,13 @@ class ControlWriter
         $parents = $config['parents'] ?? [];
 
         $skip_methods = [];
+        $perms = $config['perms'] ?? [];
         foreach ($config['methods'] as $method => $opts) {
             if (in_array($method, $skip_methods)) {
                 continue;
             }
             $content = [];
-            self::setMethodAuth($content, $auths, $gate);
+            self::setMethodAuth($content, $auths, $gate, $method, $perms);
             self::setRouteParentGetter($content, $parents, $gate);
 
             if ($class_exists) {
@@ -90,6 +98,9 @@ class ControlWriter
     }
 
     protected static function getMethodComment($config, $method, $options) {
+        if ($config['gate'] != 'api') {
+            return [];
+        }
         $result = [];
 
         // with form
@@ -133,7 +144,7 @@ class ControlWriter
         return $result;
     }
 
-    protected static function setMethodAuth(&$content, $auth, $gate)
+    protected static function setMethodAuth(&$content, $auth, $gate, $method, $perms)
     {
         $au_line = [];
 
@@ -149,11 +160,29 @@ class ControlWriter
             $content[] = 'if (' . implode(' || ', $au_line) . ') {';
             if ($gate === 'api') {
                 $content[] = '    return $this->resp(401);';
+            } elseif($gate == 'admin') {
+                $content[] = '    return $this->loginFirst(1);';
             } else {
                 $content[] = '    deb(\'Unauthorized\');';
             }
             $content[] = '}';
             $content[] = '';
+        }
+
+        if ($perms) {
+            $suffix = [
+                'index'   => 'read',
+                'details' => 'read',
+                'remove'  => 'remove'
+            ];
+
+            if (isset($suffix[$method])) {
+                $perm = $perms['prefix'] . '_' . $suffix[$method];
+                $content[] = 'if (!$this->can_i->' . $perm . ') {';
+                $content[] = '    return $this->show404();';
+                $content[] = '}';
+                $content[] = '';
+            }
         }
     }
 
@@ -178,6 +207,8 @@ class ControlWriter
             $content[] = 'if (!$' . $name . ') {';
             if ($gate === 'api') {
                 $content[] = '    return $this->resp(404);';
+            } elseif ($gate === 'admin') {
+                $content[] = '    return $this->show404();';
             } else {
                 $content[] = '    deb(\'Not found\');';
             }
@@ -202,6 +233,7 @@ class ControlWriter
         $tx.= $nl;
 
         $uses = self::getUsesClasses($config);
+        ControlMethodWriterAdmin::setParamsMethod($config, $methods, $uses);
         ControlWriterParentMethod::setParentGetters($config, $methods, $uses);
         self::genActionMethods($config, $methods, $uses);
 

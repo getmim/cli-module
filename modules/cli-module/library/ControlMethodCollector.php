@@ -96,9 +96,9 @@ class ControlMethodCollector
         }
     }
 
-    protected static function setQuerySort(&$opts, $action)
+    protected static function setQuerySort(&$opts, $gate, $action)
     {
-        if ($action !== 'index') {
+        if ($action !== 'index' || $gate != 'api') {
             return;
         }
 
@@ -116,7 +116,7 @@ class ControlMethodCollector
         }
     }
 
-    protected static function setForm(&$opts, $gate, $action, $format)
+    protected static function setForm(&$opts, $gate, $action, $format, $methods)
     {
         $with_form = [
             'admin' => [
@@ -138,9 +138,18 @@ class ControlMethodCollector
             return;
         }
 
+        $default = self::genFormName($gate, $action, $format);
+        if ($gate == 'admin' && $action == 'remove') {
+            if (isset($methods['index'])) {
+                if (isset($methods['index']['form'])) {
+                    $default = $methods['index']['form'];
+                }
+            }
+        }
+
         $opts['form'] = Bash::ask([
             'text' => 'Form name',
-            'default' => self::genFormName($gate, $action, $format),
+            'default' => $default,
             'space' => 2,
             'required' => true
         ]);
@@ -216,9 +225,9 @@ class ControlMethodCollector
             $opts = [];
             $selecteds[] = $action;
 
-            self::setForm($opts, $gate, $action, $result['format']);
+            self::setForm($opts, $gate, $action, $result['format'], $result['methods']);
             self::setQueryFilter($opts, $action);
-            self::setQuerySort($opts, $action);
+            self::setQuerySort($opts, $gate, $action);
             self::setCreateSetter($opts, $gate, $action);
             self::setSoftDelete($opts, $action);
 

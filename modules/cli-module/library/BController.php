@@ -14,6 +14,39 @@ use CliModule\Library\BClass;
 
 class BController
 {
+    protected static function createMigration($config, $class, $here)
+    {
+        if ($class['gate'] == 'admin') {
+            ControlMigrationAdmin::create($config, $class, $here);
+        }
+    }
+
+    protected static function getCActiveMenu(&$result)
+    {
+        if ($result['gate'] != 'admin') {
+            return;
+        }
+
+        $menus = Bash::ask([
+            'text' => 'Active sidebar menu, separeted by comma'
+        ]);
+
+        if (!$menus) {
+            return;
+        }
+
+        $menus = explode(',', $menus);
+        $menus = array_map('trim', $menus);
+
+        $result['menu'] = [
+            'items' => $menus,
+            'label' => Bash::ask([
+                'text' => 'Menu label',
+                'space' => 2
+            ])
+        ];
+    }
+
     protected static function getCAuth(&$result)
     {
         $auth = [];
@@ -40,9 +73,6 @@ class BController
         } else {
             $auth['user'] = true;
         }
-
-        // TODO
-        // - ask for permissions for admin gate
 
         $result['auths'] = $auth;
     }
@@ -110,10 +140,60 @@ class BController
         }
     }
 
+    protected static function getCPerms(&$result)
+    {
+        if ($result['gate'] != 'admin') {
+            return;
+        }
+        $default = 'object';
+        $group = 'Object';
+        if (isset($result['format'])) {
+            $default = preg_replace('![^a-z]!', '_', $result['format']['name']);
+            $group = ucwords(str_replace('_', ' ', $default));
+        }
+
+        $result['perms'] = [
+            'prefix' => Bash::ask([
+                'text' => 'Action permissions prefix',
+                'default' => $default
+            ]),
+            'group' => Bash::ask([
+                'text' => 'Permissions group name',
+                'required' => true,
+                'default' => $group,
+                'space' => 2
+            ])
+        ];
+    }
+
     protected static function getCDocPath(&$result)
     {
+        if ($result['gate'] != 'api') {
+            return;
+        }
+
         $result['Doc.Path'] = Bash::ask([
             'text' => 'Documentator base dir'
+        ]);
+    }
+
+    protected static function getCView(&$result)
+    {
+        if ($result['gate'] == 'api') {
+            return;
+        }
+
+        if (isset($result['format'])) {
+            $pars = str_replace('-', '/', $result['format']['name']);
+        } else {
+            $pars = array_keys($result['parents']);
+            $pars = implode('/', $pars);
+            $pars.= '/object';
+        }
+
+        $result['view'] = Bash::ask([
+            'text' => 'Path of the view files',
+            'default' => $pars
         ]);
     }
 
@@ -121,19 +201,87 @@ class BController
     {
         $result = [];
 
-        self::getCGate($result);
-        self::getCModel($result);
-        self::getCDocPath($result);
-        ControlRouteCollector::build($result);
-        self::getCAuth($result);
+        // self::getCGate($result);
+        // self::getCModel($result);
+        // self::getCPerms($result);
+        // self::getCActiveMenu($result);
+        // self::getCDocPath($result);
+        // ControlRouteCollector::build($result);
+        // self::getCAuth($result);
+        // self::getCView($result);
 
-        Bash::echo('Object filters', 0, true);
-        $result['filters'] = [];
-        ControlFilterCollector::setFilters($result['filters'], $result['parents'], 2);
+        // Bash::echo('Object filters', 0, true);
+        // $result['filters'] = [];
+        // ControlFilterCollector::setFilters($result['filters'], $result['parents'], 2);
 
-        ControlMethodCollector::collect($result);
+        // ControlMethodCollector::collect($result);
+
+        // echo serialize($result);
+        // exit;
+        $result = unserialize('a:12:{s:4:"gate";s:5:"admin";s:7:"extends";s:17:"\Admin\Controller";s:5:"model";s:22:"\Product\Model\Product";s:6:"format";a:2:{s:4:"name";s:13:"store-product";s:6:"fields";a:1:{i:0;s:5:"store";}}s:5:"perms";a:2:{s:6:"prefix";s:13:"store_product";s:5:"group";s:13:"Store Product";}s:4:"menu";a:2:{s:5:"items";a:2:{i:0;s:5:"store";i:1;s:7:"product";}s:5:"label";s:7:"Product";}s:5:"route";a:1:{s:4:"path";a:2:{s:5:"value";s:23:"/store/(:store)/product";s:6:"params";a:1:{s:5:"store";s:6:"number";}}}s:7:"parents";a:1:{s:5:"store";a:4:{s:5:"model";s:17:"Store\Model\Store";s:5:"field";s:2:"id";s:7:"filters";a:2:{s:6:"status";s:1:"1";s:8:"services";a:2:{s:4:"user";a:2:{s:8:"property";s:2:"id";s:6:"column";s:4:"user";}s:5:"brand";a:2:{s:8:"property";s:2:"id";s:6:"column";s:14:"merchant_brand";}}}s:6:"setget";a:2:{s:8:"property";s:2:"id";s:6:"column";s:5:"store";}}}s:5:"auths";a:1:{s:4:"user";b:1;}s:4:"view";s:13:"store/product";s:7:"filters";a:2:{s:6:"status";s:1:"1";s:7:"parents";a:1:{s:5:"store";a:2:{s:8:"property";s:2:"id";s:6:"column";s:5:"store";}}}s:7:"methods";a:4:{s:5:"index";a:2:{s:4:"form";s:25:"admin.store-product.index";s:7:"filters";a:2:{i:0;s:1:"q";i:1;s:4:"type";}}s:4:"edit";a:2:{s:4:"form";s:24:"admin.store-product.edit";s:7:"columns";a:1:{s:8:"services";a:1:{s:4:"user";a:2:{s:8:"property";s:2:"id";s:6:"column";s:4:"user";}}}}s:7:"details";a:0:{}s:6:"remove";a:1:{s:4:"form";s:25:"admin.store-product.index";}}}');
+
+        // $result = unserialize('a:12:{s:4:"gate";s:5:"admin";s:7:"extends";s:17:"\Admin\Controller";s:5:"model";s:60:"\StoreProductDetailsOptions\Model\StoreProductDetailsOptions";s:6:"format";a:2:{s:4:"name";s:29:"store-product-details-options";s:6:"fields";a:2:{i:0;s:7:"product";i:1;s:7:"details";}}s:5:"perms";a:2:{s:6:"prefix";s:29:"store_product_details_options";s:5:"group";s:29:"Store Product Details Options";}s:4:"menu";a:2:{s:5:"items";a:2:{i:0;s:5:"store";i:1;s:7:"product";}s:5:"label";s:7:"Product";}s:5:"route";a:1:{s:4:"path";a:2:{s:5:"value";s:61:"/store/(:store)/product/(:product)/details/(:details)/options";s:6:"params";a:3:{s:5:"store";s:6:"number";s:7:"product";s:6:"number";s:7:"details";s:6:"number";}}}s:7:"parents";a:3:{s:5:"store";a:3:{s:5:"model";s:17:"Store\Model\Store";s:5:"field";s:2:"id";s:7:"filters";a:2:{s:6:"status";s:1:"1";s:8:"services";a:2:{s:4:"user";a:2:{s:8:"property";s:2:"id";s:6:"column";s:4:"user";}s:5:"brand";a:2:{s:8:"property";s:2:"id";s:6:"column";s:14:"merchant_brand";}}}}s:7:"product";a:4:{s:5:"model";s:31:"StoreProduct\Model\StoreProduct";s:5:"field";s:2:"id";s:7:"filters";a:1:{s:7:"parents";a:1:{s:5:"store";a:2:{s:8:"property";s:2:"id";s:6:"column";s:5:"store";}}}s:6:"setget";a:2:{s:8:"property";s:2:"id";s:6:"column";s:7:"product";}}s:7:"details";a:3:{s:5:"model";s:45:"StoreProductDetails\Model\StoreProductDetails";s:5:"field";s:2:"id";s:7:"filters";a:1:{s:7:"parents";a:2:{s:5:"store";a:2:{s:8:"property";s:2:"id";s:6:"column";s:5:"store";}s:7:"product";a:2:{s:8:"property";s:7:"product";s:6:"column";s:7:"product";}}}}}s:4:"view";s:29:"store/product/details/options";s:7:"filters";a:2:{s:6:"status";s:1:"1";s:7:"parents";a:2:{s:7:"product";a:2:{s:8:"property";s:2:"id";s:6:"column";s:7:"product";}s:7:"details";a:2:{s:8:"property";s:2:"id";s:6:"column";s:7:"details";}}}s:7:"methods";a:4:{s:5:"index";a:2:{s:4:"form";s:27:"admin.details-options.index";s:7:"filters";a:2:{i:0;s:1:"q";i:1;s:4:"type";}}s:4:"edit";a:2:{s:4:"form";s:40:"admin.store-product-details-options.edit";s:7:"columns";a:1:{s:8:"services";a:1:{s:4:"user";a:2:{s:8:"property";s:2:"id";s:6:"column";s:4:"user";}}}}s:7:"details";a:0:{}s:6:"remove";a:2:{s:4:"form";s:27:"admin.details-options.index";s:6:"status";s:1:"0";}}s:5:"auths";a:1:{s:4:"user";b:1;}}');
 
         return $result;
+    }
+
+    protected static function setConfigAdminMenu(&$config, $class)
+    {
+        if ($class['gate'] != 'admin') {
+            return;
+        }
+
+        if (!isset($class['menu']) || !$class['menu']) {
+            return;
+        }
+
+        $menu = $class['menu'];
+
+        if (!isset($config['adminUi'])) {
+            $config['adminUi'] = [];
+        }
+        if (!isset($config['adminUi']['sidebarMenu'])) {
+            $config['adminUi']['sidebarMenu'] = [];
+        }
+        if (!isset($config['adminUi']['sidebarMenu']['items'])) {
+            $config['adminUi']['sidebarMenu']['items'] = [];
+        }
+
+        $items = $menu['items'];
+        $label = $menu['label'];
+
+        $menu_items = &$config['adminUi']['sidebarMenu']['items'];
+
+        $f_item = $items[0];
+        if (!isset($menu_items[$f_item])) {
+            $menu_items[$f_item] = [];
+        }
+
+        $perms = $class['perms']['prefix'] . '_read';
+        $route = $class['methods']['index']['name'];
+
+        if (count($items) == 1) {
+            $menu_items[$f_item] = [
+                'label' => $label,
+                'icon' => '<i class="fa fa-home" aria-hidden="true"></i>',
+                'route' => [$route,[],[]],
+                'priority' => 100000,
+                'perms' => $perms,
+                'filterable' => TRUE,
+                'visible' => TRUE
+            ];
+        } elseif(count($items) == 2) {
+            $s_item = $items[1];
+            if (!isset($menu_items[$f_item]['children'])) {
+                $menu_items[$f_item]['children'] = [];
+            }
+            $menu_items[$f_item]['children'][$s_item] = [
+                'label' => $label,
+                'icon'  => '<i></i>',
+                'route' => [$route],
+                'perms' => $perms
+            ];
+        }
     }
 
     protected static function setConfigFormatter(&$config, $class)
@@ -149,6 +297,10 @@ class BController
     {
         $forms = [];
         $methods = ['create', 'update', 'edit'];
+        if ($class['gate'] == 'admin') {
+            $methods[] = 'remove';
+            $methods[] = 'index';
+        }
 
         $found = false;
         foreach ($methods as $method) {
@@ -169,6 +321,21 @@ class BController
 
             if (!isset($config['libForm']['forms'][$form])) {
                 $config['libForm']['forms'][$form] = [];
+            }
+
+            if ($method == 'index' && $class['gate'] == 'admin') {
+                if (isset($class['methods']['index']['filters'])) {
+                    $filters = $class['methods']['index']['filters'];
+                    foreach ($filters as $field) {
+                        if (!isset($config['libForm']['forms'][$form][$field])) {
+                            $config['libForm']['forms'][$form][$field] = [
+                                'label' => $field == 'q' ? 'Search' : ucfirst($field),
+                                'type' => 'text',
+                                'rules' => []
+                            ];
+                        }
+                    }
+                }
             }
         }
 
@@ -202,7 +369,7 @@ class BController
         RequireAdder::module($config, 'lib-pagination', null);
     }
 
-    protected static function setConfigRouter(&$config, $class, $ns, $name)
+    protected static function setConfigRouter(&$config, &$class, $ns, $name)
     {
         $methods = [
             'admin' => [
@@ -242,12 +409,6 @@ class BController
         }
 
         $prefix = $gate;
-        if (isset($class['parents'])) {
-            foreach ($class['parents'] as $parent => $opt) {
-                $prefix.= ucfirst($parent);
-            }
-        }
-
         $format_cc = preg_replace('![^a-zA-Z0-9]!', ' ', $format);
         $format_cc = ucwords($format_cc);
         $format_cc = str_replace(' ', '', $format_cc);
@@ -280,7 +441,24 @@ class BController
                 'handler' => $ctrl_name . '::' . $method,
                 'method' => $methods[$method] ?? 'GET'
             ];
+            $class['methods'][$method]['name'] = $route_name;
         }
+    }
+
+    protected static function setConfigViewFile(&$config, $class, $here)
+    {
+        if (!isset($class['view'])) {
+            return;
+        }
+
+        $view = 'theme/' . $class['gate'] . '/' . $class['view'];
+        $role = $class['gate'] == 'admin'
+            ? ['install', 'update', 'remove']
+            : ['install', 'remove'];
+
+        $config['__files'][$view] = $role;
+
+        Fs::mkdir($here . '/' . $view);
     }
 
     static function build(string $here, string $name, array $config = []): bool{
@@ -302,7 +480,7 @@ class BController
 
         $ctrl_file = 'modules/' . $mod_name . '/controller/' . $ctrl_name . '.php';
         
-        if(is_file($ctrl_file))
+        if(is_file($here . '/' . $ctrl_file))
             Bash::error('Controller with the same file name already exists');
 
         if (!$config) {
@@ -318,16 +496,20 @@ class BController
         self::setConfigGate($mod_conf, $ctrl_config);
         self::setConfigPagination($mod_conf, $ctrl_config);
         self::setConfigRouter($mod_conf, $ctrl_config, $ctrl_ns, $ctrl_name);
+        self::setConfigAdminMenu($mod_conf, $ctrl_config);
+        self::setConfigViewFile($mod_conf, $ctrl_config, $here);
+
         ALAdder::classes($mod_conf, $ctrl_ns, $ctrl_name, $ctrl_file);
 
         ControlWriter::write($here, $mod_conf, $ctrl_config, $ctrl_file);
 
+        self::createMigration($mod_conf, $ctrl_config, $here);
         $nl = PHP_EOL;
         
         $tx = '<?php' . $nl;
         $tx.= $nl;
         $tx.= 'return ' . to_source($mod_conf) . ';';
-        
+
         Fs::write($mod_conf_file, $tx);
         
         return true;
