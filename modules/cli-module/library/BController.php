@@ -201,26 +201,20 @@ class BController
     {
         $result = [];
 
-        // self::getCGate($result);
-        // self::getCModel($result);
-        // self::getCPerms($result);
-        // self::getCActiveMenu($result);
-        // self::getCDocPath($result);
-        // ControlRouteCollector::build($result);
-        // self::getCAuth($result);
-        // self::getCView($result);
+        self::getCGate($result);
+        self::getCModel($result);
+        self::getCPerms($result);
+        self::getCActiveMenu($result);
+        self::getCDocPath($result);
+        ControlRouteCollector::build($result);
+        self::getCAuth($result);
+        self::getCView($result);
 
-        // Bash::echo('Object filters', 0, true);
-        // $result['filters'] = [];
-        // ControlFilterCollector::setFilters($result['filters'], $result['parents'], 2);
+        Bash::echo('Object filters', 0, true);
+        $result['filters'] = [];
+        ControlFilterCollector::setFilters($result['filters'], $result['parents'], 2);
 
-        // ControlMethodCollector::collect($result);
-
-        // echo serialize($result);
-        // exit;
-        $result = unserialize('a:12:{s:4:"gate";s:5:"admin";s:7:"extends";s:17:"\Admin\Controller";s:5:"model";s:22:"\Product\Model\Product";s:6:"format";a:2:{s:4:"name";s:13:"store-product";s:6:"fields";a:1:{i:0;s:5:"store";}}s:5:"perms";a:2:{s:6:"prefix";s:13:"store_product";s:5:"group";s:13:"Store Product";}s:4:"menu";a:2:{s:5:"items";a:2:{i:0;s:5:"store";i:1;s:7:"product";}s:5:"label";s:7:"Product";}s:5:"route";a:1:{s:4:"path";a:2:{s:5:"value";s:23:"/store/(:store)/product";s:6:"params";a:1:{s:5:"store";s:6:"number";}}}s:7:"parents";a:1:{s:5:"store";a:4:{s:5:"model";s:17:"Store\Model\Store";s:5:"field";s:2:"id";s:7:"filters";a:2:{s:6:"status";s:1:"1";s:8:"services";a:2:{s:4:"user";a:2:{s:8:"property";s:2:"id";s:6:"column";s:4:"user";}s:5:"brand";a:2:{s:8:"property";s:2:"id";s:6:"column";s:14:"merchant_brand";}}}s:6:"setget";a:2:{s:8:"property";s:2:"id";s:6:"column";s:5:"store";}}}s:5:"auths";a:1:{s:4:"user";b:1;}s:4:"view";s:13:"store/product";s:7:"filters";a:2:{s:6:"status";s:1:"1";s:7:"parents";a:1:{s:5:"store";a:2:{s:8:"property";s:2:"id";s:6:"column";s:5:"store";}}}s:7:"methods";a:4:{s:5:"index";a:2:{s:4:"form";s:25:"admin.store-product.index";s:7:"filters";a:2:{i:0;s:1:"q";i:1;s:4:"type";}}s:4:"edit";a:2:{s:4:"form";s:24:"admin.store-product.edit";s:7:"columns";a:1:{s:8:"services";a:1:{s:4:"user";a:2:{s:8:"property";s:2:"id";s:6:"column";s:4:"user";}}}}s:7:"details";a:0:{}s:6:"remove";a:1:{s:4:"form";s:25:"admin.store-product.index";}}}');
-
-        // $result = unserialize('a:12:{s:4:"gate";s:5:"admin";s:7:"extends";s:17:"\Admin\Controller";s:5:"model";s:60:"\StoreProductDetailsOptions\Model\StoreProductDetailsOptions";s:6:"format";a:2:{s:4:"name";s:29:"store-product-details-options";s:6:"fields";a:2:{i:0;s:7:"product";i:1;s:7:"details";}}s:5:"perms";a:2:{s:6:"prefix";s:29:"store_product_details_options";s:5:"group";s:29:"Store Product Details Options";}s:4:"menu";a:2:{s:5:"items";a:2:{i:0;s:5:"store";i:1;s:7:"product";}s:5:"label";s:7:"Product";}s:5:"route";a:1:{s:4:"path";a:2:{s:5:"value";s:61:"/store/(:store)/product/(:product)/details/(:details)/options";s:6:"params";a:3:{s:5:"store";s:6:"number";s:7:"product";s:6:"number";s:7:"details";s:6:"number";}}}s:7:"parents";a:3:{s:5:"store";a:3:{s:5:"model";s:17:"Store\Model\Store";s:5:"field";s:2:"id";s:7:"filters";a:2:{s:6:"status";s:1:"1";s:8:"services";a:2:{s:4:"user";a:2:{s:8:"property";s:2:"id";s:6:"column";s:4:"user";}s:5:"brand";a:2:{s:8:"property";s:2:"id";s:6:"column";s:14:"merchant_brand";}}}}s:7:"product";a:4:{s:5:"model";s:31:"StoreProduct\Model\StoreProduct";s:5:"field";s:2:"id";s:7:"filters";a:1:{s:7:"parents";a:1:{s:5:"store";a:2:{s:8:"property";s:2:"id";s:6:"column";s:5:"store";}}}s:6:"setget";a:2:{s:8:"property";s:2:"id";s:6:"column";s:7:"product";}}s:7:"details";a:3:{s:5:"model";s:45:"StoreProductDetails\Model\StoreProductDetails";s:5:"field";s:2:"id";s:7:"filters";a:1:{s:7:"parents";a:2:{s:5:"store";a:2:{s:8:"property";s:2:"id";s:6:"column";s:5:"store";}s:7:"product";a:2:{s:8:"property";s:7:"product";s:6:"column";s:7:"product";}}}}}s:4:"view";s:29:"store/product/details/options";s:7:"filters";a:2:{s:6:"status";s:1:"1";s:7:"parents";a:2:{s:7:"product";a:2:{s:8:"property";s:2:"id";s:6:"column";s:7:"product";}s:7:"details";a:2:{s:8:"property";s:2:"id";s:6:"column";s:7:"details";}}}s:7:"methods";a:4:{s:5:"index";a:2:{s:4:"form";s:27:"admin.details-options.index";s:7:"filters";a:2:{i:0;s:1:"q";i:1;s:4:"type";}}s:4:"edit";a:2:{s:4:"form";s:40:"admin.store-product-details-options.edit";s:7:"columns";a:1:{s:8:"services";a:1:{s:4:"user";a:2:{s:8:"property";s:2:"id";s:6:"column";s:4:"user";}}}}s:7:"details";a:0:{}s:6:"remove";a:2:{s:4:"form";s:27:"admin.details-options.index";s:6:"status";s:1:"0";}}s:5:"auths";a:1:{s:4:"user";b:1;}}');
+        ControlMethodCollector::collect($result);
 
         return $result;
     }
