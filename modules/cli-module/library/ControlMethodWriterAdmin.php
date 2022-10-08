@@ -22,7 +22,8 @@ class ControlMethodWriterAdmin
 
         $view = $config['view'];
 
-        $content[] = '$obj = [];';
+        $content[] = '';
+        $content[] = '$obj = (object)[];';
         $content[] = '$id = $this->req->param->id;';
         $content[] = '';
         $content[] = 'if ($id) {';
@@ -48,18 +49,18 @@ class ControlMethodWriterAdmin
         $content[] = '$params[\'form\'] = $form;';
         $content[] = '';
 
+        $content[] = 'if (!($valid = $form->validate($obj))) {';
+        $content[] = '    return $this->resp(\'' . $view . '/edit\', $params);';
+        $content[] = '}';
+        $content[] = '';
+
         $content[] = 'if (!$form->csrfTest(\'noob\')) {';
         $content[] = '    return $this->show404();';
         $content[] = '}';
         $content[] = '';
 
-        $content[] = 'if (!($valid = $form->validate($contact))) {';
-        $content[] = '    return $this->resp(\'' . $view . '/edit\', $params);';
-        $content[] = '}';
-        $content[] = '';
-
         $content[] = 'if ($id) {';
-        $content[] = '    if (!' . $model . '::set((array)$valid, [\'id\'=>$id]) {';
+        $content[] = '    if (!' . $model . '::set((array)$valid, [\'id\'=>$id])) {';
         $content[] = '        deb(' . $model . '::lastError());';
         $content[] = '    }';
         $content[] = '} else {';
@@ -145,7 +146,13 @@ class ControlMethodWriterAdmin
 
         $view = $config['view'];
 
-        $content[] = '$cond = $pcond = [];';
+        $filters = $config['filters'];
+        $cond = ControlFilterProcess::getFilters($filters);
+        $content[] = '$cond = [';
+        ControlFilterProcess::addArrayCond($content, $cond);
+        $content[] = '];';
+
+        $content[] = '$pcond = [];';
         $content[] = '$params = $this->getParams(\'' . $title . '\');';
         $content[] = '$form = new Form(\'' . $form . '\');';
         $content[] = '';
@@ -165,7 +172,7 @@ class ControlMethodWriterAdmin
             $content[] = '';
         }
 
-        $content[] = 'list($page, $rpp) = $this->req->getPager(25, 50);';
+        $content[] = 'list($page, $rpp) = $this->req->getPager(12, 25);';
         $content[] = '';
 
         $content[] = '$objs = ' . $model . '::get($cond, $rpp, $page, [\'id\'=>false]) ?? [];';
@@ -185,6 +192,7 @@ class ControlMethodWriterAdmin
 
         $content[] = '$params[\'objects\'] = $objs;';
         $content[] = '$params[\'form\']    = $form;';
+        $content[] = '$form->validate((object)$this->req->get());';
         $content[] = '';
 
         $curr_route_name = $config['methods']['index']['name'];

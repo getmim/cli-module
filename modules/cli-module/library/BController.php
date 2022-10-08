@@ -259,7 +259,7 @@ class BController
                 'label' => $label,
                 'icon' => '<i class="fa fa-home" aria-hidden="true"></i>',
                 'route' => [$route,[],[]],
-                'priority' => 100000,
+                'priority' => 0,
                 'perms' => $perms,
                 'filterable' => TRUE,
                 'visible' => TRUE
@@ -273,7 +273,8 @@ class BController
                 'label' => $label,
                 'icon'  => '<i></i>',
                 'route' => [$route],
-                'perms' => $perms
+                'perms' => $perms,
+                'priority' => 100
             ];
         }
     }
@@ -325,6 +326,7 @@ class BController
                             $config['libForm']['forms'][$form][$field] = [
                                 'label' => $field == 'q' ? 'Search' : ucfirst($field),
                                 'type' => 'text',
+                                'nolabel' => true,
                                 'rules' => []
                             ];
                         }
@@ -424,6 +426,10 @@ class BController
             if (in_array($method, $with_suffix_id)) {
                 $route_path['value'] .= '/(:id)';
                 $route_path['params']['id'] = 'number';
+            }
+
+            if ($method == 'remove' && $gate == 'admin') {
+                $route_path['value'] .= '/remove';
             }
 
             if (!$route_path['params']) {

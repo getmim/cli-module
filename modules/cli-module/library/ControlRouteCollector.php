@@ -105,12 +105,11 @@ class ControlRouteCollector
         $route = &$result['route'];
         $route_path = &$route['path'];
 
+        $result['parents'] = [];
         $parents = self::getParentsName($route_path);
         if (!$parents) {
             return;
         }
-
-        $result['parents'] = [];
 
         foreach ($parents as $name) {
             Bash::echo('Parameter `' . $name . '` properties', 2, true);
