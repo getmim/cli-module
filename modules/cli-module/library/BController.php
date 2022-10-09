@@ -64,14 +64,16 @@ class BController
             }
         }
 
-        if ($gate !== 'admin') {
+        if ($gate == 'admin') {
+            $auth['user'] = true;
+        } elseif ($gate == 'cli') {
+            $auth['user'] = false;
+        } else {
             $auth['user'] = Bash::ask([
                 'text' => 'Require user login',
                 'default' => $gate != 'site',
                 'type' => 'bool'
             ]);
-        } else {
-            $auth['user'] = true;
         }
 
         $result['auths'] = $auth;
@@ -106,6 +108,10 @@ class BController
 
     protected static function getCModel(&$result)
     {
+        if ($result['gate'] == 'cli') {
+            return;
+        }
+
         $model = Bash::ask([
             'text' => 'Handling model',
             'required' => true
@@ -179,7 +185,7 @@ class BController
 
     protected static function getCView(&$result)
     {
-        if ($result['gate'] == 'api') {
+        if (in_array($result['gate'], ['api', 'cli'])) {
             return;
         }
 
@@ -210,9 +216,11 @@ class BController
         self::getCAuth($result);
         self::getCView($result);
 
-        Bash::echo('Object filters', 0, true);
-        $result['filters'] = [];
-        ControlFilterCollector::setFilters($result['filters'], $result['parents'], 2);
+        if ($result['gate'] != 'cli') {
+            Bash::echo('Object filters', 0, true);
+            $result['filters'] = [];
+            ControlFilterCollector::setFilters($result['filters'], $result['parents'], 2);
+        }
 
         ControlMethodCollector::collect($result);
 

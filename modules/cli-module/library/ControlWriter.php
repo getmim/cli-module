@@ -37,7 +37,7 @@ class ControlWriter
         }
 
         // object model
-        if ($config['model']) {
+        if (isset($config['model']) && $config['model']) {
             $classes[] = $config['model'];
         }
 

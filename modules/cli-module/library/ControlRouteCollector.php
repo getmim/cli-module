@@ -89,7 +89,10 @@ class ControlRouteCollector
             'text' => 'Route prefix',
             'required' => true
         ]);
-        $prefix = '/' . trim($prefix, '/');
+        $prefix = trim($prefix, '/');
+        if ($reuslt['gate'] != 'cli') {
+            $prefix = '/' . $prefix;
+        }
 
         $result['route'] = [
             'path' => [

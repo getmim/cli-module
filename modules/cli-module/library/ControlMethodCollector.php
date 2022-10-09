@@ -24,6 +24,9 @@ class ControlMethodCollector
         'site' => [
             'index',
             'single'
+        ],
+        'cli' => [
+            'worker'
         ]
     ];
 
@@ -224,8 +227,9 @@ class ControlMethodCollector
 
             $opts = [];
             $selecteds[] = $action;
+            $format = $result['format'] ?? [];
 
-            self::setForm($opts, $gate, $action, $result['format'], $result['methods']);
+            self::setForm($opts, $gate, $action, $format, $result['methods']);
             self::setQueryFilter($opts, $action);
             self::setQuerySort($opts, $gate, $action);
             self::setCreateSetter($opts, $gate, $action);
