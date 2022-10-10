@@ -233,7 +233,9 @@ class ControlMethodCollector
             self::setQueryFilter($opts, $action);
             self::setQuerySort($opts, $gate, $action);
             self::setCreateSetter($opts, $gate, $action);
-            self::setSoftDelete($opts, $action);
+            if ($result['gate'] != 'cli') {
+                self::setSoftDelete($opts, $action);
+            }
 
             $result['methods'][$action] = $opts;
         }

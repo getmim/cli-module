@@ -396,6 +396,11 @@ class BController
         ];
 
         $gate = $class['gate'];
+        $route_gate = $gate;
+        if ($gate == 'cli') {
+            $route_gate = 'tool';
+        }
+
         $methods = $methods[$gate] ?? [];
         $format = 'object';
         if (isset($class['format'])) {
@@ -408,8 +413,8 @@ class BController
             $config['routes'] = [];
         }
 
-        if (!isset($config['routes'][$gate])) {
-            $config['routes'][$gate] = [];
+        if (!isset($config['routes'][$route_gate])) {
+            $config['routes'][$route_gate] = [];
         }
 
         $prefix = $gate;
@@ -444,7 +449,7 @@ class BController
                 unset($route_path['params']);
             }
 
-            $config['routes'][$gate][$route_name] = [
+            $config['routes'][$route_gate][$route_name] = [
                 'path' => $route_path,
                 'handler' => $ctrl_name . '::' . $method,
                 'method' => $methods[$method] ?? 'GET'
