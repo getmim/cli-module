@@ -151,7 +151,7 @@ class ControlMethodWriterApi
         $content[] = 'list($page, $rpp) = $this->req->getPager(12, 24);';
         $content[] = '';
 
-        if (!$opts['sorts']) {
+        if ($opts['sorts']) {
             $content[] = '$sort = [$sort_key => $sort_by];';
             $content[] = '$objs = ' . $model . '::get($cond, $rpp, $page, $sort) ?? [];';
         } else {
