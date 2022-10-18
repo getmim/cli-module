@@ -137,8 +137,12 @@ class BController
                 'text' => 'Format object fields, separate by commas',
                 'space' => 2
             ]);
-            $fields = explode(',', $fields);
-            $fields = array_map('trim', $fields);
+            if ($fields) {
+                $fields = explode(',', $fields);
+                $fields = array_map('trim', $fields);
+            } else {
+                $fields = [];
+            }
             $result['format'] = [
                 'name' => $format,
                 'fields' => $fields
@@ -223,7 +227,6 @@ class BController
         }
 
         ControlMethodCollector::collect($result);
-
         return $result;
     }
 
