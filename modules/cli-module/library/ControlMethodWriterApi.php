@@ -165,7 +165,7 @@ class ControlMethodWriterApi
             }
             $content[] = 'if ($objs) {';
             $content[] = '    $fmt = [' . $fmt . '];';
-            $content[] = '    $objs = Formatter::formatMany(\'' . $format['name'] . '\', $obj, $fmt);';
+            $content[] = '    $objs = Formatter::formatMany(\'' . $format['name'] . '\', $objs, $fmt);';
             $content[] = '}';
             $content[] = '';
         }
