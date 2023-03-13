@@ -54,7 +54,7 @@ class ControlMethodWriterAdmin
         $content[] = '}';
         $content[] = '';
 
-        $content[] = 'if (!$form->csrfTest(\'noob\')) {';
+        $content[] = 'if (!$form->csrfTest(\'t\')) {';
         $content[] = '    return $this->show404();';
         $content[] = '}';
         $content[] = '';
@@ -221,7 +221,7 @@ class ControlMethodWriterAdmin
 
         // csrf
         $content[] = '$form = new Form(\'' . $form . '\');';
-        $content[] = 'if (!$form->csrfTest(\'noob\')) {';
+        $content[] = 'if (!$form->csrfTest(\'t\')) {';
         $content[] = '    return $this->show404();';
         $content[] = '}';
         $content[] = '';

@@ -517,6 +517,7 @@ class BController
 
         ALAdder::classes($mod_conf, $ctrl_ns, $ctrl_name, $ctrl_file);
 
+        ViewWriter::write($here, $ctrl_config);
         ControlWriter::write($here, $mod_conf, $ctrl_config, $ctrl_file);
 
         self::createMigration($mod_conf, $ctrl_config, $here);
