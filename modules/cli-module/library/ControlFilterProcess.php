@@ -43,7 +43,7 @@ class ControlFilterProcess
         if (isset($filters['status'])) {
             $status = $filters['status'];
             if (!is_numeric($status)) {
-                $status = '\'' . addcslashes($status) . '\'';
+                $status = '\'' . addslashes($status) . '\'';
             }
 
             $result['status'] = $status;
