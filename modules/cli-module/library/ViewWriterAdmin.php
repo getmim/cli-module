@@ -154,6 +154,7 @@ class ViewWriterAdmin
         $ctn[] = '                        </small>';
         $ctn[] = '                    </li>';
         $ctn[] = '                <?php endforeach; ?>';
+        $ctn[] = '                </ul>';
         $ctn[] = '            <?php endif; ?>';
 
         $ctn[] = '            <?php if($pages): ?>';
