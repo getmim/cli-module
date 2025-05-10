@@ -8,76 +8,94 @@
 namespace CliModule\Controller;
 
 use Cli\Library\Bash;
-use CliModule\Library\{
-    Builder,
-    BAdmin,
-    BController,
-    BGit,
-    BHelper,
-    BIface,
-    BLibrary,
-    BMiddleware,
-    BModel,
-    BService
-};
+use CliModule\Library\Builder;
+use CliModule\Library\BAdmin;
+use CliModule\Library\BController;
+use CliModule\Library\BGit;
+use CliModule\Library\BHelper;
+use CliModule\Library\BIface;
+use CliModule\Library\BLibrary;
+use CliModule\Library\BMiddleware;
+use CliModule\Library\BModel;
+use CliModule\Library\BService;
 
 class ModuleController extends \CliModule\Controller
 {
-    public function adminAction(): void{
+    public function adminAction(): void
+    {
         $here = $this->validateModuleHere();
-        if(BAdmin::build($here, $this->req->param->name))
+        if (BAdmin::build($here, $this->req->param->name)) {
             Bash::echo('Successfully create new control');
+        }
     }
 
-    public function controllerAction(): void{
+    public function controllerAction(): void
+    {
         $here = $this->validateModuleHere();
-        if(BController::build($here, $this->req->param->name))
+        if (BController::build($here, $this->req->param->name)) {
             Bash::echo('Successfully create new controller');
+        }
     }
 
-    public function gitAction(): void{
-    	$here = $this->validateModuleHere();
-        if(BGit::init($here))
+    public function gitAction(): void
+    {
+        $here = $this->validateModuleHere();
+        if (BGit::init($here)) {
             Bash::echo('Successfully initializing current module git remote origin repository');
+        }
     }
     
-    public function helperAction(): void{
+    public function helperAction(): void
+    {
         $here = $this->validateModuleHere();
-        if(BHelper::build($here, $this->req->param->name))
+        if (BHelper::build($here, $this->req->param->name)) {
             Bash::echo('Successfully create new blank helper file');
+        }
     }
 
-    public function ifaceAction(): void{
-        if(BIface::build(getcwd(), $this->req->param->name))
+    public function ifaceAction(): void
+    {
+        if (BIface::build(getcwd(), $this->req->param->name)) {
             Bash::echo('Successfully create new empty interface');
+        }
     }
     
-    public function initAction(): void{
-        if(Builder::build(getcwd()))
+    public function initAction(): void
+    {
+        if (Builder::build(getcwd())) {
             Bash::echo('Successfully create new empty module');
+        }
     }
     
-    public function libraryAction(): void{
+    public function libraryAction(): void
+    {
         $here = $this->validateModuleHere();
-        if(BLibrary::build($here, $this->req->param->name))
+        if (BLibrary::build($here, $this->req->param->name)) {
             Bash::echo('Successfully create new blank library');
+        }
     }
 
-    public function middlewareAction(): void{
+    public function middlewareAction(): void
+    {
         $here = $this->validateModuleHere();
-        if(BMiddleware::build($here, $this->req->param->name))
+        if (BMiddleware::build($here, $this->req->param->name)) {
             Bash::echo('Successfully create new middleware');
+        }
     }
     
-    public function modelAction(): void{
+    public function modelAction(): void
+    {
         $here = $this->validateModuleHere();
-        if(BModel::build($here, $this->req->param->name))
+        if (BModel::build($here, $this->req->param->name)) {
             Bash::echo('Successfully create new blank model');
+        }
     }
     
-    public function serviceAction(): void{
+    public function serviceAction(): void
+    {
         $here = $this->validateModuleHere();
-        if(BService::build($here, $this->req->param->name))
+        if (BService::build($here, $this->req->param->name)) {
             Bash::echo('Successfully create new blank service');
+        }
     }
 }

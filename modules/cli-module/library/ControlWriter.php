@@ -97,7 +97,8 @@ class ControlWriter
         }
     }
 
-    protected static function getMethodComment($config, $method, $options) {
+    protected static function getMethodComment($config, $method, $options)
+    {
         if ($config['gate'] != 'api') {
             return [];
         }
@@ -160,7 +161,7 @@ class ControlWriter
             $content[] = 'if (' . implode(' || ', $au_line) . ') {';
             if ($gate === 'api') {
                 $content[] = '    return $this->resp(401);';
-            } elseif($gate == 'admin') {
+            } elseif ($gate == 'admin') {
                 $content[] = '    return $this->loginFirst(1);';
             } else {
                 $content[] = '    deb(\'Unauthorized\');';
@@ -217,7 +218,7 @@ class ControlWriter
         }
     }
 
-    static function write(string $here, array $module, array $config, string $file)
+    public static function write(string $here, array $module, array $config, string $file)
     {
         $nl = PHP_EOL;
         $methods = [];
@@ -264,7 +265,6 @@ class ControlWriter
                 $tx.= $nl;
             }
             if (isset($opts['comments']) && $opts['comments']) {
-
                 $tx.= '    /**' . $nl;
                 foreach ($opts['comments'] as $line) {
                     $tx.= '     * ' . $line . $nl;
@@ -274,6 +274,8 @@ class ControlWriter
             $tx.= '    ';
             if ($opts['protected']) {
                 $tx.= 'protected ';
+            } else {
+                $tx.= 'public ';
             }
             $tx.= 'function ';
             $tx.= $method;

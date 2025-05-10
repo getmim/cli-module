@@ -32,16 +32,16 @@ class ControlMethodWriterAdmin
         $content[] = '    }';
         $content[] = '';
         $content[] = '    $obj = ' . $model . '::getOne([\'id\'=>$id]);';
-        $content[] = '    if(!$obj) {';
+        $content[] = '    if (!$obj) {';
         $content[] = '        return $this->show404();';
         $content[] = '    }';
-        $content[] = '    $params = $this->getParams(\'Edit ' . $title . '\');';
+        $content[] = '    $params = $this->getParams(\'Edit\');';
         $content[] = '} else {';
         $content[] = '    if (!$this->can_i->' . $perms . '_create) {';
         $content[] = '        return $this->show404();';
         $content[] = '    }';
         $content[] = '';
-        $content[] = '    $params = $this->getParams(\'Create New ' . $title . '\');';
+        $content[] = '    $params = $this->getParams(\'Create New\');';
         $content[] = '}';
         $content[] = '';
 
@@ -199,7 +199,7 @@ class ControlMethodWriterAdmin
 
         $content[] = '// pagination';
         $content[] = '$params[\'total\'] = $total = ' . $model . '::count($cond);';
-        $content[] = 'if ($total > $rpp){ ';
+        $content[] = 'if ($total > $rpp) { ';
         $content[] = '    $params[\'pages\'] = new Paginator(';
         $content[] = '        $this->router->to(\'' . $curr_route_name . '\'),';
         $content[] = '        $total,';
@@ -323,7 +323,7 @@ class ControlMethodWriterAdmin
     public static function method(&$content, $config, $method, $opts, $uses)
     {
         $c_method = 'set' . ucfirst($method);
-        if (!method_exists(ControlMethodWriterAdmin::class, $c_method)){
+        if (!method_exists(ControlMethodWriterAdmin::class, $c_method)) {
             $content[] = '// START EDIT HERE?';
             return;
         }

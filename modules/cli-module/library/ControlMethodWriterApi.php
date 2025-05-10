@@ -52,7 +52,7 @@ class ControlMethodWriterApi
             $content[] = '';
         }
 
-        $content[] = 'if(!($id = ' . $model . '::create((array)$valid))) {';
+        $content[] = 'if (!($id = ' . $model . '::create((array)$valid))) {';
         $content[] = '    return $this->resp(500, null, ' . $model . '::lastError());';
         $content[] = '}';
 
@@ -232,7 +232,7 @@ class ControlMethodWriterApi
         $content[] = '}';
         $content[] = '';
 
-        $content[] = 'if(!' . $model . '::set((array)$valid, [\'id\' => $obj->id])) {';
+        $content[] = 'if (!' . $model . '::set((array)$valid, [\'id\' => $obj->id])) {';
         $content[] = '    return $this->resp(500, null, ' . $model . '::lastError());';
         $content[] = '}';
 
@@ -256,7 +256,7 @@ class ControlMethodWriterApi
     public static function method(&$content, $config, $method, $opts, $uses)
     {
         $c_method = 'set' . ucfirst($method);
-        if (!method_exists(ControlMethodWriterApi::class, $c_method)){
+        if (!method_exists(ControlMethodWriterApi::class, $c_method)) {
             $content[] = '// START EDIT HERE';
             return;
         }

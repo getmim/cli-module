@@ -12,19 +12,23 @@ use Cli\Library\Bash;
 use CliModule\Library\ConfigCollector;
 
 class Builder
-{   
-    static function build(string $here): bool{
+{
+    public static function build(string $here): bool
+    {
         // make sure the folder is empty
-        if(Fs::scan($here))
+        if (Fs::scan($here)) {
             Bash::error('Target directory is not empty');
+        }
         
         // make sure we can write here
-        if(!is_writable($here))
+        if (!is_writable($here)) {
             Bash::error('Unable to write to current directory');
+        }
         
         $config = ConfigCollector::collect($here);
-        if(!$config)
+        if (!$config) {
             return false;
+        }
         
         $mod_name = $config['__name'];
         $mod_dir  = $here . '/modules/' . $mod_name;
@@ -38,12 +42,13 @@ class Builder
         
         Fs::write($mod_conf_file, $tx);
         
-        // now, create readme file 
+        // now, create readme file
         self::readme($here, $config['__name'], $config['__git']);
         return true;
     }
     
-    static function readme(string $here, string $name, string $git): void{
+    public static function readme(string $here, string $name, string $git): void
+    {
         $readme_file = $here . '/README.md';
         
         $repo = strstr($git, 'getmim') ? $name : $git;
@@ -54,11 +59,15 @@ class Builder
         $tx.= $nl;
         $tx.= '## Instalasi' . $nl;
         $tx.= $nl;
-        $tx.= 'Jalankan perintah di bawah di folder aplikasi:' . $nl;
-        $tx.= $nl;
-        $tx.= '```' . $nl;
-        $tx.= 'mim app install ' . $repo . $nl;
-        $tx.= '```' . $nl;
+        if ($repo == '~') {
+            $tx.= 'Jalankan perintah di bawah di folder aplikasi:' . $nl;
+            $tx.= $nl;
+            $tx.= '```' . $nl;
+            $tx.= 'mim app install ' . $repo . $nl;
+            $tx.= '```' . $nl;
+        } else {
+            $tx .= 'Sync dari module ke aplikasi';
+        }
         
         Fs::write($readme_file, $tx);
     }
